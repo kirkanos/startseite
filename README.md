@@ -103,3 +103,9 @@ Dann <http://localhost:8090> öffnen.
 - Hinter einem HTTPS-Reverse-Proxy setzt der Proxy den Header `X-Forwarded-Proto:
   https`; dann werden die Cookies automatisch als `Secure` markiert.
 - Passwort ändern = neuen Hash erzeugen, `APP_PASSWORD_HASH` aktualisieren, Container neu starten.
+
+## Lizenz
+
+Lizenziert unter der [Apache License 2.0](LICENSE).
+
+© 2026 [kirkanos](https://www.kirkanos.net)

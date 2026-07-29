@@ -178,4 +178,11 @@ a { color: inherit; text-decoration: none; }
 .cat-row .x { border: 1px solid var(--border); background: var(--surface); border-radius: 9px; width: 36px; height: 36px; cursor: pointer; color: var(--ink-faint); font-size: 18px; line-height: 1; }
 .cat-row .x:hover { color: var(--danger); border-color: var(--danger); }
 
+/* Footer */
+.site-footer { max-width: 1120px; margin: 0 auto; padding: 22px 20px 36px; display: flex; align-items: center; justify-content: center; gap: 14px; font-size: 12.5px; color: var(--ink-faint); border-top: 1px solid var(--border); }
+.site-footer a { color: var(--ink-faint); }
+.site-footer a:hover { color: var(--ink); }
+.site-footer .gh { display: inline-flex; }
+.site-footer .gh svg { width: 18px; height: 18px; display: block; }
+
 @media (prefers-reduced-motion: reduce) { .card { transition: none; } }
