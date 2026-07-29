@@ -1,0 +1,137 @@
+{{define "content"}}
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
+      </span>
+      Startseite
+    </div>
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="search" type="search" placeholder="{{.T "search_placeholder"}}" autocomplete="off">
+    </div>
+    <div class="spacer"></div>
+    <span class="lang" aria-label="Sprache / Language">
+      <a href="/lang/de" class="{{if eq .Lang "de"}}on{{end}}">DE</a>
+      <a href="/lang/en" class="{{if eq .Lang "en"}}on{{end}}">EN</a>
+    </span>
+    <button class="btn ghost" id="login-open">{{.T "log_in"}}</button>
+  </div>
+</header>
+
+<div class="wrap">
+  {{if .Groups}}
+  <nav class="cats" aria-label="{{.T "category"}}">
+    <button class="cat active" data-cat="all">{{.T "all"}} <span class="n">· {{.Total}}</span></button>
+    {{range .Groups}}
+      <button class="cat" data-cat="{{.ID}}"><span class="dot" style="background:{{.Color}}"></span>{{.Name}} <span class="n">· {{len .Links}}</span></button>
+    {{end}}
+  </nav>
+  <p class="empty" id="empty-search" hidden>{{.T "no_matches"}}</p>
+
+  {{range .Groups}}
+  <section class="section" data-cat="{{.ID}}">
+    <div class="section-head">
+      <span class="dot" style="background:{{.Color}}"></span>
+      <h2>{{.Name}}</h2>
+      <span class="count">{{len .Links}}</span>
+      <span class="rule"></span>
+    </div>
+    <div class="grid">
+      {{range .Links}}
+      <div class="card" data-cat="{{.CategoryID}}" data-search="{{lower .Title}} {{lower (host .URL)}}">
+        <a class="card-link" href="{{.URL}}" target="_blank" rel="noopener noreferrer">
+          <div class="thumb">
+            {{if .Thumbnail}}
+              <img src="/thumbnails/{{.Thumbnail}}" alt="{{.Title}}" loading="lazy">
+            {{else}}
+              <div class="thumb-fallback">
+                {{if .Favicon}}<img src="{{.Favicon}}" alt="" loading="lazy" data-ini="{{initials .Title}}">{{else}}<span>{{initials .Title}}</span>{{end}}
+              </div>
+            {{end}}
+          </div>
+          <div class="card-body">
+            {{if .Favicon}}<img class="favicon" src="{{.Favicon}}" alt="" loading="lazy" data-ini="{{initials .Title}}">{{else}}<span class="favicon ph">{{initials .Title}}</span>{{end}}
+            <div class="meta">
+              <div class="card-title">{{.Title}}</div>
+              <div class="card-url mono">{{host .URL}}</div>
+            </div>
+          </div>
+        </a>
+      </div>
+      {{end}}
+    </div>
+  </section>
+  {{end}}
+  {{else}}
+  <p class="empty">{{.T "no_public_links"}}</p>
+  {{end}}
+</div>
+
+<dialog class="add-dialog" id="login-dialog">
+  <form method="POST" action="/login">
+    <h3>{{.T "log_in"}}</h3>
+    <p class="sub">{{.T "login_sub"}}</p>
+    <label class="field"><span>{{.T "password"}}</span><input type="password" name="password" autocomplete="current-password" autofocus required></label>
+    <label class="remember"><input type="checkbox" name="remember" checked><span>{{.T "stay_logged_in"}}</span></label>
+    {{if .LoginError}}<p class="err">{{.LoginError}}</p>{{end}}
+    <div class="dialog-actions">
+      <button class="btn ghost" type="button" id="login-cancel">{{.T "cancel"}}</button>
+      <button class="btn primary" type="submit">{{.T "log_in"}}</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+  // ---------- Login-Modal ----------
+  const loginDlg = document.getElementById('login-dialog');
+  document.getElementById('login-open').addEventListener('click', () => loginDlg.showModal());
+  document.getElementById('login-cancel').addEventListener('click', () => loginDlg.close());
+  {{if .LoginError}}loginDlg.showModal();{{end}}
+
+  // ---------- Filter (Kategorie + Suche) ----------
+  const search = document.getElementById('search');
+  if (search) {
+    let activeCat = 'all';
+    const sections = [...document.querySelectorAll('.section')];
+    const emptySearch = document.getElementById('empty-search');
+    function applyFilter() {
+      const q = search.value.trim().toLowerCase();
+      let anyVisible = false;
+      for (const s of sections) {
+        const catMatch = activeCat === 'all' || s.dataset.cat === activeCat;
+        let hasVisible = false;
+        for (const card of s.querySelectorAll('.card')) {
+          const show = catMatch && (!q || card.dataset.search.includes(q));
+          card.hidden = !show;
+          if (show) { hasVisible = true; anyVisible = true; }
+        }
+        s.hidden = !catMatch || !hasVisible;
+      }
+      emptySearch.hidden = anyVisible;
+    }
+    document.querySelectorAll('.cat[data-cat]').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.cat[data-cat]').forEach((c) => c.classList.remove('active'));
+        chip.classList.add('active');
+        activeCat = chip.dataset.cat;
+        applyFilter();
+      });
+    });
+    search.addEventListener('input', applyFilter);
+  }
+
+  // ---------- Kaputte Favicons durch Initialen ersetzen ----------
+  function faviconFallback(img) {
+    const span = document.createElement('span');
+    span.textContent = img.dataset.ini || '•';
+    span.className = img.classList.contains('favicon') ? 'favicon ph' : 'thumb-ini';
+    img.replaceWith(span);
+  }
+  document.querySelectorAll('.favicon[data-ini], .thumb-fallback img[data-ini]').forEach((img) => {
+    img.addEventListener('error', () => faviconFallback(img));
+    if (img.complete && img.naturalWidth === 0) faviconFallback(img);
+  });
+</script>
+{{end}}

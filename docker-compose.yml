@@ -1,0 +1,16 @@
+services:
+  startseite:
+    build: .
+    container_name: startseite
+    restart: unless-stopped
+    ports:
+      - "8080:3000"
+    volumes:
+      # Host-Verzeichnis (kein Docker-Volume): DB + Thumbnails liegen hier.
+      - ./data:/data
+    environment:
+      # Hash erzeugen mit:  docker compose run --rm startseite -hash "meinPasswort"
+      APP_PASSWORD_HASH: "${APP_PASSWORD_HASH}"
+      # Erzeugen mit:  openssl rand -hex 32
+      SESSION_SECRET: "${SESSION_SECRET}"
+      DATA_DIR: /data

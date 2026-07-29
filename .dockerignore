@@ -1,0 +1,6 @@
+data
+.git
+.env
+*.log
+startseite
+README.md
