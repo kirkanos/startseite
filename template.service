@@ -1,0 +1,13 @@
+[Unit]
+Description=%SERVICE%
+After=docker.service
+BindsTo=docker.service
+
+[Service]
+Restart=always
+WorkingDirectory=/services/%SERVICE%/
+ExecStart=/usr/bin/docker compose up --build --force-recreate --pull always
+ExecStop=/usr/bin/docker compose down
+
+[Install]
+WantedBy=multi-user.target

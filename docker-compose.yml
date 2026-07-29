@@ -1,16 +1,40 @@
+networks:
+  traefik-network:
+    external: true
+
 services:
-  startseite:
-    build: .
-    container_name: startseite
-    restart: unless-stopped
-    ports:
-      - "8080:3000"
-    volumes:
-      # Host-Verzeichnis (kein Docker-Volume): DB + Thumbnails liegen hier.
-      - ./data:/data
+  web:
+    build:
+      context: .
+    container_name: ${SERVICE}
     environment:
-      # Hash erzeugen mit:  docker compose run --rm startseite -hash "meinPasswort"
-      APP_PASSWORD_HASH: "${APP_PASSWORD_HASH}"
-      # Erzeugen mit:  openssl rand -hex 32
-      SESSION_SECRET: "${SESSION_SECRET}"
-      DATA_DIR: /data
+      - APP_PASSWORD_HASH=${APP_PASSWORD_HASH}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - DATA_DIR=/data
+      - PORT=${PORT}
+    volumes:
+      # Host-Verzeichnis (kein Docker-Volume): SQLite + Thumbnails liegen hier.
+      - ./data:/data
+    # --- Hardening ---
+    # Kein read_only: chromedp/Chromium braucht schreibbare Temp-/Profilpfade.
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 1g
+    pids_limit: 512
+    restart: unless-stopped
+    networks:
+      - default
+      - traefik-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${SERVICE}.entrypoints=http"
+      - "traefik.http.routers.${SERVICE}.rule=Host(`${HOST}`)"
+      - "traefik.http.middlewares.${SERVICE}-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.${SERVICE}.middlewares=${SERVICE}-https-redirect"
+      - "traefik.http.routers.${SERVICE}-secure.entrypoints=https"
+      - "traefik.http.routers.${SERVICE}-secure.rule=Host(`${HOST}`)"
+      - "traefik.http.routers.${SERVICE}-secure.tls=true"
+      - "traefik.http.routers.${SERVICE}-secure.tls.certresolver=default"
+      - "traefik.http.routers.${SERVICE}-secure.service=${SERVICE}"
+      - "traefik.http.services.${SERVICE}.loadbalancer.server.port=${PORT}"
+      - "traefik.docker.network=traefik-network"

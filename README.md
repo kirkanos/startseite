@@ -40,42 +40,51 @@ data/
 └── thumbnails/       # generierte Screenshot-Vorschauen (*.jpg)
 ```
 
-## Schnellstart (Docker)
+## Schnellstart (Docker, hinter Traefik)
 
-1. **Secret erzeugen und Image bauen:**
+Die `docker-compose.yml` ist für den Betrieb hinter einem **Traefik**-Reverse-Proxy
+ausgelegt (externes Netzwerk `traefik-network`, TLS via `certresolver=default`).
 
-   ```bash
-   openssl rand -hex 32                 # ergibt das SESSION_SECRET
-   docker compose build
-   ```
-
-2. **Passwort-Hash erzeugen** (das Binary kann das selbst):
+1. **`.env` aus der Vorlage anlegen:**
 
    ```bash
-   docker compose run --rm startseite -hash "meinGeheimesPasswort"
+   cp .env.sample .env
    ```
 
-3. **`.env` anlegen** (neben der `docker-compose.yml`):
-
-   ```env
-   APP_PASSWORD_HASH=$2a$12$....      # Ausgabe aus Schritt 2
-   SESSION_SECRET=....                # Ausgabe aus "openssl rand -hex 32"
-   ```
-
-4. **Starten:**
+2. **Secret und Passwort-Hash erzeugen** und in die `.env` eintragen:
 
    ```bash
-   docker compose up -d
+   openssl rand -hex 32                              # -> SESSION_SECRET
+   docker compose run --rm web -hash "meinPasswort"  # -> APP_PASSWORD_HASH
    ```
 
-   Dashboard: <http://localhost:8080> — die Daten landen im Ordner `./data`.
+   `SERVICE`, `HOST` und `PORT` in der `.env` an die eigene Umgebung anpassen.
+
+3. **Starten:**
+
+   ```bash
+   docker compose up -d --build
+   ```
+
+   Erreichbar unter `https://$HOST`. Die Daten (SQLite + Thumbnails) landen im
+   Host-Ordner `./data`.
+
+### Nur lokal testen (ohne Traefik)
+
+```bash
+docker build -t startseite .
+docker run --rm -p 8080:3000 \
+  -e APP_PASSWORD_HASH="$(docker run --rm startseite -hash test)" \
+  -e SESSION_SECRET=dev -v "$PWD/data:/data" startseite
+# -> http://localhost:8080
+```
 
 ## Lokale Entwicklung (ohne Docker)
 
 Voraussetzung: Go 1.23+ und ein installiertes Chrome/Chromium.
 
 ```bash
-go run . -hash "test"                 # Hash ausgeben, in .env eintragen
+go run . -hash "test"                 # Hash ausgeben, unten einsetzen
 export APP_PASSWORD_HASH='...' SESSION_SECRET='dev' DATA_DIR=./data PORT=8090
 # macOS: falls Chrome nicht gefunden wird:
 # export CHROME_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
@@ -84,14 +93,41 @@ go run .
 
 Dann <http://localhost:8090> öffnen.
 
+## Deployment (Woodpecker CI + sops)
+
+Die Secrets liegen **verschlüsselt** als [`.env.enc`](.env.enc) im Repo (sops + age);
+die Klartext-`.env` ist per `.gitignore` ausgeschlossen.
+
+`.env` verschlüsseln (age-Key aus `$SOPS_AGE_KEY_FILE`):
+
+```bash
+sops --encrypt --age "$(cat "$SOPS_AGE_KEY_FILE" | ggrep -oP 'public key: \K(.*)')" \
+  --input-type dotenv --output-type dotenv --output .env.enc .env
+```
+
+Die Pipeline [`.woodpecker/pipeline.yaml`](.woodpecker/pipeline.yaml) läuft bei Push
+auf `main` und
+
+1. entschlüsselt `.env.enc` → `.env` (sops, age-Key aus Secret `sops_age_key`),
+2. lädt den Build-Kontext (Go-Quellen, `templates/`, `static/`, Compose, `.env`)
+   per `scp` nach `/services/$SERVICE/` auf `ssh_host_local` und installiert die
+   systemd-Unit aus `template.service`,
+3. startet den Dienst neu — der Container wird **auf dem Zielhost** gebaut
+   (`docker compose up --build --pull always` via systemd).
+
+Benötigte Woodpecker-Secrets: `sops_age_key` (privater age-Key) und `ssh_host_local`
+(Ziel `user@host` für SSH auf Port 822).
+
 ## Konfiguration (Umgebungsvariablen)
 
 | Variable            | Bedeutung                                                        |
 | ------------------- | --------------------------------------------------------------- |
+| `SERVICE`           | Dienstname (Container, Traefik-Router, Deploy-Verzeichnis)      |
+| `HOST`              | öffentliche Domain für Traefik (z. B. `start.kirkanos.net`)     |
 | `APP_PASSWORD_HASH` | bcrypt-Hash des Master-Passworts (Pflicht)                     |
 | `SESSION_SECRET`    | Secret zum Signieren des Session-Cookies (Pflicht)            |
 | `DATA_DIR`          | Datenverzeichnis; im Container `/data`, lokal z. B. `./data`   |
-| `PORT`              | HTTP-Port (Standard 3000)                                      |
+| `PORT`              | HTTP-Port (Standard 3000; = Traefik-Ziel-Port)                 |
 | `CHROME_PATH`       | Pfad zum Browser-Binary (im Container gesetzt; lokal optional) |
 
 ## Hinweise
