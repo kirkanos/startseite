@@ -33,7 +33,7 @@ steps:
       - test -n "$SSH_HOST_PRIMUS" || (echo "SSH_HOST_PRIMUS ist leer" && exit 1)
       - echo "Deploy target host=$SSH_HOST_PRIMUS service=$SERVICE"
       - export SSH_OPTS='-o BatchMode=yes -o RequestTTY=no -o ConnectTimeout=15 -o ConnectionAttempts=1 -o StrictHostKeyChecking=accept-new -o ServerAliveInterval=5 -o ServerAliveCountMax=2 -p22'
-      - export SCP_OPTS='-o BatchMode=yes -o ConnectTimeout=15 -o ConnectionAttempts=1 -o StrictHostKeyChecking=accept-new -o ServerAliveInterval=5 -o ServerAliveCountMax=2 -P822'
+      - export SCP_OPTS='-o BatchMode=yes -o ConnectTimeout=15 -o ConnectionAttempts=1 -o StrictHostKeyChecking=accept-new -o ServerAliveInterval=5 -o ServerAliveCountMax=2 -P22'
       - timeout 25 sh -c "ssh -n -T $SSH_OPTS \"$SSH_HOST_PRIMUS\" 'echo SSH-OK host=\$(hostname) user=\$(whoami)'"
       - timeout 25 sh -c "ssh -n -T $SSH_OPTS \"$SSH_HOST_PRIMUS\" \"mkdir -p /services/$SERVICE/templates /services/$SERVICE/static\""
       - echo "Upload build context (Go-Quellen + Compose)"
