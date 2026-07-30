@@ -4,7 +4,7 @@ go 1.26
 
 require (
 	github.com/chromedp/chromedp v0.16.0
-	golang.org/x/crypto v0.31.0
+	golang.org/x/crypto v0.54.0
 	modernc.org/sqlite v1.55.0
 )
 
