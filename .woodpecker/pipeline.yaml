@@ -25,27 +25,27 @@ steps:
     image: registry.kirkanos.net/images/ci-build:alpine
     volumes: [ "/services/common/.ssh:/root/.ssh" ]
     environment:
-      SSH_HOST_LOCAL:
-        from_secret: ssh_host_local
+      SSH_HOST_PRIMUS:
+        from_secret: ssh_host_primus
     commands:
       - set -a && . ./.env && set +a
       - test -n "$SERVICE" || (echo "SERVICE ist leer" && exit 1)
-      - test -n "$SSH_HOST_LOCAL" || (echo "SSH_HOST_LOCAL ist leer" && exit 1)
-      - echo "Deploy target host=$SSH_HOST_LOCAL service=$SERVICE"
+      - test -n "$SSH_HOST_PRIMUS" || (echo "SSH_HOST_PRIMUS ist leer" && exit 1)
+      - echo "Deploy target host=$SSH_HOST_PRIMUS service=$SERVICE"
       - export SSH_OPTS='-o BatchMode=yes -o RequestTTY=no -o ConnectTimeout=15 -o ConnectionAttempts=1 -o StrictHostKeyChecking=accept-new -o ServerAliveInterval=5 -o ServerAliveCountMax=2 -p822'
       - export SCP_OPTS='-o BatchMode=yes -o ConnectTimeout=15 -o ConnectionAttempts=1 -o StrictHostKeyChecking=accept-new -o ServerAliveInterval=5 -o ServerAliveCountMax=2 -P822'
-      - timeout 25 sh -c "ssh -n -T $SSH_OPTS \"$SSH_HOST_LOCAL\" 'echo SSH-OK host=\$(hostname) user=\$(whoami)'"
-      - timeout 25 sh -c "ssh -n -T $SSH_OPTS \"$SSH_HOST_LOCAL\" \"mkdir -p /services/$SERVICE/templates /services/$SERVICE/static\""
+      - timeout 25 sh -c "ssh -n -T $SSH_OPTS \"$SSH_HOST_PRIMUS\" 'echo SSH-OK host=\$(hostname) user=\$(whoami)'"
+      - timeout 25 sh -c "ssh -n -T $SSH_OPTS \"$SSH_HOST_PRIMUS\" \"mkdir -p /services/$SERVICE/templates /services/$SERVICE/static\""
       - echo "Upload build context (Go-Quellen + Compose)"
-      - timeout 60 sh -c "scp $SCP_OPTS docker-compose.yml Dockerfile .dockerignore .env go.mod go.sum *.go \"$SSH_HOST_LOCAL\":/services/$SERVICE/"
+      - timeout 60 sh -c "scp $SCP_OPTS docker-compose.yml Dockerfile .dockerignore .env go.mod go.sum *.go \"$SSH_HOST_PRIMUS\":/services/$SERVICE/"
       - echo "Upload templates/"
-      - timeout 60 sh -c "scp $SCP_OPTS -r templates/* \"$SSH_HOST_LOCAL\":/services/$SERVICE/templates/"
+      - timeout 60 sh -c "scp $SCP_OPTS -r templates/* \"$SSH_HOST_PRIMUS\":/services/$SERVICE/templates/"
       - echo "Upload static/"
-      - timeout 60 sh -c "scp $SCP_OPTS -r static/* \"$SSH_HOST_LOCAL\":/services/$SERVICE/static/"
+      - timeout 60 sh -c "scp $SCP_OPTS -r static/* \"$SSH_HOST_PRIMUS\":/services/$SERVICE/static/"
       - echo "Upload systemd unit"
       - sed -e "s/%SERVICE%/$SERVICE/g" template.service > "$SERVICE.service"
-      - timeout 25 sh -c "scp $SCP_OPTS \"$SERVICE.service\" \"$SSH_HOST_LOCAL\":/etc/systemd/system"
-      - timeout 25 sh -c "ssh -n -T $SSH_OPTS \"$SSH_HOST_LOCAL\" \"systemctl daemon-reload && systemctl enable $SERVICE\""
+      - timeout 25 sh -c "scp $SCP_OPTS \"$SERVICE.service\" \"$SSH_HOST_PRIMUS\":/etc/systemd/system"
+      - timeout 25 sh -c "ssh -n -T $SSH_OPTS \"$SSH_HOST_PRIMUS\" \"systemctl daemon-reload && systemctl enable $SERVICE\""
     when:
       - event: push
 
@@ -53,15 +53,15 @@ steps:
     image: registry.kirkanos.net/images/ci-build:alpine
     volumes: [ "/services/common/.ssh:/root/.ssh" ]
     environment:
-      SSH_HOST_LOCAL:
-        from_secret: ssh_host_local
+      SSH_HOST_PRIMUS:
+        from_secret: ssh_host_primus
     commands:
       - set -a && . ./.env && set +a
       - test -n "$SERVICE" || (echo "SERVICE ist leer" && exit 1)
-      - test -n "$SSH_HOST_LOCAL" || (echo "SSH_HOST_LOCAL ist leer" && exit 1)
+      - test -n "$SSH_HOST_PRIMUS" || (echo "SSH_HOST_PRIMUS ist leer" && exit 1)
       - export SSH_OPTS='-o BatchMode=yes -o RequestTTY=no -o ConnectTimeout=15 -o ConnectionAttempts=1 -o StrictHostKeyChecking=accept-new -o ServerAliveInterval=5 -o ServerAliveCountMax=2 -p822'
-      - timeout 25 sh -c "ssh -n -T $SSH_OPTS \"$SSH_HOST_LOCAL\" \"systemctl stop $SERVICE\" || true"
-      - timeout 60 sh -c "ssh -n -T $SSH_OPTS \"$SSH_HOST_LOCAL\" \"systemctl start $SERVICE\""
+      - timeout 25 sh -c "ssh -n -T $SSH_OPTS \"$SSH_HOST_PRIMUS\" \"systemctl stop $SERVICE\" || true"
+      - timeout 60 sh -c "ssh -n -T $SSH_OPTS \"$SSH_HOST_PRIMUS\" \"systemctl start $SERVICE\""
       - echo "Service restart done (Build laeuft im Hintergrund via systemd)"
     when:
       - event: push
