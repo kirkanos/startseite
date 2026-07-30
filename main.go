@@ -58,8 +58,10 @@ func main() {
 	mux.HandleFunc("POST /links/{id}/delete", app.handleDeleteLink)
 	mux.HandleFunc("POST /links/{id}/refresh", app.handleRefreshLink)
 	mux.HandleFunc("POST /categories", app.handleAddCategory)
+	mux.HandleFunc("POST /categories/reorder", app.handleReorderCategories)
 	mux.HandleFunc("POST /categories/{id}/edit", app.handleEditCategory)
 	mux.HandleFunc("POST /categories/{id}/delete", app.handleDeleteCategory)
+	mux.HandleFunc("POST /settings", app.handleSaveSettings)
 	mux.HandleFunc("GET /thumbnails/{file}", app.handleThumbnail)
 	mux.Handle("GET /static/", http.FileServerFS(staticFS))
 

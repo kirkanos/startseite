@@ -22,6 +22,7 @@ type Group struct {
 type indexData struct {
 	i18n
 	Title      string
+	View       Settings // Ansichts-Einstellungen aus der Datenbank
 	Categories []Category
 	Groups     []Group
 	Total      int
@@ -89,6 +90,7 @@ func (a *App) handleIndex(w http.ResponseWriter, r *http.Request) {
 	render(w, indexTmpl, http.StatusOK, indexData{
 		i18n:       i18n{Lang: lang},
 		Title:      "Startseite",
+		View:       loadSettings(a.db),
 		Categories: cats,
 		Groups:     groups,
 		Total:      len(links),
@@ -101,6 +103,7 @@ func (a *App) handleIndex(w http.ResponseWriter, r *http.Request) {
 type publicData struct {
 	i18n
 	Title      string
+	View       Settings // die öffentliche Seite bleibt immer auf der Standardansicht
 	Groups     []Group
 	Total      int
 	LoginError string // gesetzt, wenn ein Login-Versuch fehlschlug (öffnet das Modal)
@@ -139,6 +142,7 @@ func (a *App) renderPublic(w http.ResponseWriter, r *http.Request, status int, l
 	render(w, publicTmpl, status, publicData{
 		i18n:       i18n{Lang: lang},
 		Title:      "Startseite",
+		View:       defaultSettings(),
 		Groups:     groups,
 		Total:      len(links),
 		LoginError: loginError,

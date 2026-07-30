@@ -8,6 +8,7 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"unicode"
 )
@@ -22,6 +23,16 @@ var funcs = template.FuncMap{
 	"host":     hostOf,
 	"initials": initials,
 	"lower":    strings.ToLower,
+	"seq":      seq,
+}
+
+// seq liefert die Zahlen from..to als Strings — für <option>-Listen.
+func seq(from, to int) []string {
+	var out []string
+	for i := from; i <= to; i++ {
+		out = append(out, strconv.Itoa(i))
+	}
+	return out
 }
 
 var (

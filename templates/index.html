@@ -33,8 +33,34 @@
     {{range .Categories}}
       <button class="cat" data-cat="{{.ID}}"><span class="dot" style="background:{{.Color}}"></span>{{.Name}} <span class="n">· {{index $.Counts .ID}}</span></button>
     {{end}}
-    <button class="cat manage" id="manage-toggle">{{.T "manage_categories"}}</button>
+    <span class="cats-right">
+      <button class="cat" id="view-toggle" title="{{.T "view_options"}}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 5h18M3 12h18M3 19h18"/><circle cx="8" cy="5" r="2" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"/><circle cx="10" cy="19" r="2" fill="currentColor" stroke="none"/></svg>
+        {{.T "view"}}
+      </button>
+      <button class="cat" id="manage-toggle">{{.T "manage_categories"}}</button>
+    </span>
   </nav>
+
+  <div class="manage-panel view-panel" id="view-panel" hidden>
+    <div class="view-opts">
+      <label class="opt"><span>{{.T "columns"}}</span>
+        <select id="opt-cols">
+          <option value="auto" {{if eq .View.Columns "auto"}}selected{{end}}>{{.T "cols_auto"}}</option>
+          {{range $n := (seq 2 6)}}<option value="{{$n}}" {{if eq $.View.Columns $n}}selected{{end}}>{{$n}}</option>{{end}}
+        </select>
+      </label>
+      <label class="opt"><span>{{.T "card_size"}} <em>{{.T "card_size_hint"}}</em></span>
+        <select id="opt-size">
+          <option value="s" {{if eq .View.CardSize "s"}}selected{{end}}>{{.T "size_s"}}</option>
+          <option value="m" {{if eq .View.CardSize "m"}}selected{{end}}>{{.T "size_m"}}</option>
+          <option value="l" {{if eq .View.CardSize "l"}}selected{{end}}>{{.T "size_l"}}</option>
+        </select>
+      </label>
+      <label class="opt check"><input type="checkbox" id="opt-thumbs" {{if .View.ShowThumbs}}checked{{end}}><span>{{.T "show_thumbs"}}</span></label>
+    </div>
+    <p class="hint">{{.T "view_saved_hint"}}</p>
+  </div>
 
   <div class="manage-panel" id="manage-panel" hidden>
     <form class="cat-add" method="POST" action="/categories">
@@ -42,9 +68,13 @@
       <input name="color" type="color" value="#4f5bd5" title="{{.T "color"}}">
       <button class="btn primary" type="submit">{{.T "create"}}</button>
     </form>
-    <div class="cat-rows">
+    <p class="hint">{{.T "drag_cats_hint"}}</p>
+    <div class="cat-rows" id="cat-rows">
       {{range .Categories}}
-      <div class="cat-row">
+      <div class="cat-row" data-id="{{.ID}}">
+        <span class="grip" title="{{$.T "reorder_category"}}" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>
+        </span>
         <form class="cat-edit" method="POST" action="/categories/{{.ID}}/edit">
           <input type="color" name="color" value="{{.Color}}" title="{{$.T "color"}}">
           <input type="text" name="name" value="{{.Name}}" aria-label="{{$.T "category_name_label"}}" required>
@@ -86,7 +116,7 @@
           <div class="card-body">
             {{if .Favicon}}<img class="favicon" src="{{.Favicon}}" alt="" loading="lazy" data-ini="{{initials .Title}}">{{else}}<span class="favicon ph">{{initials .Title}}</span>{{end}}
             <div class="meta">
-              <div class="card-title">{{.Title}}</div>
+              <div class="card-title">{{if .Public}}<span class="pub-badge-inline" title="{{$.T "public_badge"}}">🌐</span>{{end}}{{.Title}}</div>
               <div class="card-url mono">{{host .URL}}</div>
             </div>
           </div>
@@ -192,12 +222,109 @@
   });
 
   // ---------- Kategorien verwalten ----------
+  const wrap = document.querySelector('.wrap');
   const mt = document.getElementById('manage-toggle');
   const mp = document.getElementById('manage-panel');
+  const vt = document.getElementById('view-toggle');
+  const vp = document.getElementById('view-panel');
   mt.addEventListener('click', () => {
     mp.hidden = !mp.hidden;
     mt.textContent = mp.hidden ? T.manage : T.done;
+    if (!mp.hidden) vp.hidden = true;
   });
+
+  // ---------- Ansicht einstellen (in der Datenbank gespeichert) ----------
+  vt.addEventListener('click', () => {
+    vp.hidden = !vp.hidden;
+    vt.classList.toggle('active', !vp.hidden);
+    if (!vp.hidden) { mp.hidden = true; mt.textContent = T.manage; }
+  });
+
+  const optCols = document.getElementById('opt-cols');
+  const optSize = document.getElementById('opt-size');
+  const optThumbs = document.getElementById('opt-thumbs');
+
+  function applyView() {
+    document.body.dataset.cols = optCols.value;
+    document.body.dataset.size = optSize.value;
+    document.body.dataset.thumbs = optThumbs.checked ? 'on' : 'off';
+    // Die Kartenbreite greift nur, wenn die Spalten automatisch verteilt werden.
+    optSize.disabled = optCols.value !== 'auto';
+  }
+
+  function saveView() {
+    applyView();
+    fetch('/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        columns: optCols.value,
+        card_size: optSize.value,
+        show_thumbs: optThumbs.checked
+      })
+    }).catch(() => {});
+  }
+  [optCols, optSize, optThumbs].forEach((el) => el.addEventListener('change', saveView));
+  applyView();
+
+  // ---------- Drag & Drop: Kategorien sortieren ----------
+  const catRows = document.getElementById('cat-rows');
+  let dragRow = null;
+
+  function rowAfter(y) {
+    for (const el of catRows.querySelectorAll('.cat-row:not(.dragging)')) {
+      const r = el.getBoundingClientRect();
+      if (y < r.top + r.height / 2) return el;
+    }
+    return null;
+  }
+
+  catRows.querySelectorAll('.cat-row').forEach((row) => {
+    // Nur der Griff startet den Zug — sonst wären die Eingabefelder nicht nutzbar.
+    const grip = row.querySelector('.grip');
+    grip.addEventListener('pointerdown', () => { row.draggable = true; });
+    row.addEventListener('dragstart', (e) => {
+      dragRow = row;
+      e.dataTransfer.effectAllowed = 'move';
+      requestAnimationFrame(() => row.classList.add('dragging'));
+    });
+    row.addEventListener('dragend', () => {
+      row.classList.remove('dragging');
+      row.draggable = false;
+      dragRow = null;
+      persistCategoryOrder();
+    });
+  });
+  document.addEventListener('pointerup', () => {
+    if (!dragRow) catRows.querySelectorAll('.cat-row').forEach((r) => { r.draggable = false; });
+  });
+  catRows.addEventListener('dragover', (e) => {
+    if (!dragRow) return;
+    e.preventDefault();
+    const after = rowAfter(e.clientY);
+    if (after == null) catRows.appendChild(dragRow);
+    else catRows.insertBefore(dragRow, after);
+  });
+
+  // persistCategoryOrder zieht Chips und Sektionen mit und speichert die Reihenfolge.
+  function persistCategoryOrder() {
+    const ids = [...catRows.querySelectorAll('.cat-row')].map((r) => r.dataset.id);
+    const nav = document.querySelector('.cats');
+    const navRight = document.querySelector('.cats-right');
+    const uncat = document.querySelector('.section[data-cat="0"]');
+    for (const id of ids) {
+      const chip = nav.querySelector('.cat[data-cat="' + id + '"]');
+      if (chip) nav.insertBefore(chip, navRight);
+      const sec = wrap.querySelector('.section[data-cat="' + id + '"]');
+      if (sec) wrap.appendChild(sec); // Sektionen sind die letzten Kinder von .wrap
+    }
+    if (uncat) wrap.appendChild(uncat); // "Ohne Kategorie" bleibt am Ende
+    fetch('/categories/reorder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(ids.map((id, i) => ({ id: parseInt(id, 10), sort_order: i })))
+    }).then((r) => { if (!r.ok) location.reload(); }).catch(() => location.reload());
+  }
 
   // ---------- Filter (Kategorie + Suche) ----------
   let activeCat = 'all';

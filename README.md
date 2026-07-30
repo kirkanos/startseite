@@ -13,7 +13,11 @@ keine nativen Kompilier-Abhängigkeiten.
 - 🍪 **„Angemeldet bleiben"** — HMAC-signiertes Session-Cookie, 30 Tage
 - 🖼️ **Echte Screenshot-Vorschau** jeder Seite (Chromium via chromedp)
 - 🗂️ **Kategorien** mit Farben — anlegen, umbenennen, umfärben, löschen
-- ↕️ **Drag & Drop** — Links sortieren und per Ziehen in andere Kategorien verschieben
+- ↕️ **Drag & Drop** — Links sortieren und per Ziehen in andere Kategorien verschieben;
+  Kategorien selbst über den Ziehgriff in „Kategorien verwalten" umsortieren
+- 🎛️ **Ansicht konfigurierbar** („Ansicht" in der Kategorie-Zeile) — Spaltenzahl
+  (automatisch oder 2–6), Kartenbreite und Screenshot-Vorschauen ein/aus.
+  Alles liegt **in der Datenbank**, gilt also auf jedem Rechner gleich
 - ✏️ **Links bearbeiten** — URL, Titel, Kategorie; Screenshot optional neu erzeugen
 - 🌐 **Öffentliche Links** — einzeln als „öffentlich" markierbar; ohne Login sichtbar
 - 🚪 **Login optional** — die Einstiegsseite `/` zeigt ohne Login die öffentlichen Links, nach dem Login das volle Dashboard
@@ -35,7 +39,7 @@ keine nativen Kompilier-Abhängigkeiten.
 
 ```
 data/
-├── app.db            # SQLite-Datenbank (Links, Kategorien)
+├── app.db            # SQLite-Datenbank (Links, Kategorien, Ansichts-Einstellungen)
 ├── app.db-wal        # WAL-Journal
 └── thumbnails/       # generierte Screenshot-Vorschauen (*.jpg)
 ```

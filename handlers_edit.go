@@ -91,6 +91,47 @@ func (a *App) handleEditCategory(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
+type catOrderItem struct {
+	ID        int64 `json:"id"`
+	SortOrder int   `json:"sort_order"`
+}
+
+// handleReorderCategories speichert die per Drag & Drop gesetzte Reihenfolge der
+// Kategorien. Erwartet ein JSON-Array im Body.
+func (a *App) handleReorderCategories(w http.ResponseWriter, r *http.Request) {
+	var items []catOrderItem
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&items); err != nil {
+		http.Error(w, "Ungültige Daten", http.StatusBadRequest)
+		return
+	}
+
+	tx, err := a.db.Begin()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare(`UPDATE categories SET sort_order = ? WHERE id = ?`)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer stmt.Close()
+
+	for _, it := range items {
+		if _, err := stmt.Exec(it.SortOrder, it.ID); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 type reorderItem struct {
 	ID         int64 `json:"id"`
 	CategoryID int64 `json:"category_id"` // 0 = keine Kategorie
