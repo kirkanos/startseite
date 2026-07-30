@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"net/url"
 	"path/filepath"
+	"slices"
+	"strings"
 
 	_ "modernc.org/sqlite" // pure-Go SQLite-Treiber, kein cgo
 )
@@ -111,6 +113,27 @@ func listCategories(db *sql.DB) ([]Category, error) {
 		out = append(out, c)
 	}
 	return out, rows.Err()
+}
+
+// sortedByName liefert die Kategorien alphabetisch — für Auswahllisten, in denen
+// die frei gezogene Layout-Reihenfolge nicht beim Finden hilft.
+func sortedByName(cats []Category) []Category {
+	out := append([]Category(nil), cats...)
+	slices.SortFunc(out, func(a, b Category) int {
+		if c := strings.Compare(sortKey(a.Name), sortKey(b.Name)); c != 0 {
+			return c
+		}
+		return strings.Compare(a.Name, b.Name)
+	})
+	return out
+}
+
+// sortKey normalisiert für die Sortierung: Kleinschreibung, und Umlaute zählen
+// wie ihre Grundvokale — damit "Übersicht" bei U steht und nicht hinter Z.
+var umlauts = strings.NewReplacer("ä", "a", "ö", "o", "ü", "u", "ß", "ss")
+
+func sortKey(name string) string {
+	return umlauts.Replace(strings.ToLower(name))
 }
 
 func listLinks(db *sql.DB) ([]Link, error) {

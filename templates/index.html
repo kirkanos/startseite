@@ -153,7 +153,7 @@
     <label class="field"><span>{{.T "category"}}</span>
       <select name="category_id">
         <option value="">{{.T "category_none"}}</option>
-        {{range .Categories}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
+        {{range .SelectCats}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
       </select>
     </label>
     <label class="remember"><input type="checkbox" name="public"><span>{{.T "public_checkbox"}}</span></label>
@@ -173,7 +173,7 @@
     <label class="field"><span>{{.T "category"}}</span>
       <select name="category_id">
         <option value="">{{.T "category_none"}}</option>
-        {{range .Categories}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
+        {{range .SelectCats}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
       </select>
     </label>
     <label class="remember"><input type="checkbox" name="public"><span>{{.T "public_checkbox"}}</span></label>

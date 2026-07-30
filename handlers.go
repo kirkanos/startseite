@@ -54,8 +54,9 @@ func isHexColor(s string) bool {
 type indexData struct {
 	i18n
 	Title      string
-	View       Settings // Ansichts-Einstellungen aus der Datenbank
-	Categories []Category
+	View       Settings   // Ansichts-Einstellungen aus der Datenbank
+	Categories []Category // in Layout-Reihenfolge (Chips, Verwalten-Panel)
+	SelectCats []Category // alphabetisch (Auswahllisten in den Dialogen)
 	Groups     []Group
 	Total      int
 	Counts     map[int64]int
@@ -131,6 +132,7 @@ func (a *App) handleIndex(w http.ResponseWriter, r *http.Request) {
 		Title:      "Startseite",
 		View:       view,
 		Categories: cats,
+		SelectCats: sortedByName(cats),
 		Groups:     groups,
 		Total:      len(links),
 		Counts:     counts,
