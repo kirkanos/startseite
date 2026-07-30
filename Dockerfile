@@ -1,5 +1,5 @@
 # ---- Build-Stage: statisches Go-Binary (kein cgo dank modernc.org/sqlite) ----
-FROM golang:1.23-bookworm AS builder
+FROM golang:1.24-bookworm AS builder
 
 WORKDIR /app
 COPY go.mod go.sum ./
