@@ -59,6 +59,7 @@ func main() {
 	mux.HandleFunc("POST /links/{id}/refresh", app.handleRefreshLink)
 	mux.HandleFunc("POST /categories", app.handleAddCategory)
 	mux.HandleFunc("POST /categories/reorder", app.handleReorderCategories)
+	mux.HandleFunc("POST /categories/{id}/span", app.handleCategorySpan)
 	mux.HandleFunc("POST /categories/{id}/edit", app.handleEditCategory)
 	mux.HandleFunc("POST /categories/{id}/delete", app.handleDeleteCategory)
 	mux.HandleFunc("POST /settings", app.handleSaveSettings)

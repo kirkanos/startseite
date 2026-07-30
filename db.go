@@ -17,6 +17,7 @@ type Category struct {
 	Name      string
 	Color     string
 	SortOrder int
+	Span      int // Breite im 12-Spalten-Raster der Übersicht (12 = ganze Zeile)
 }
 
 type Link struct {
@@ -47,9 +48,10 @@ func openDB(dataDir string) (*sql.DB, error) {
 	if _, err := db.Exec(schema); err != nil {
 		return nil, err
 	}
-	// Migration für bestehende Datenbanken: Spalte "public" nachrüsten.
-	// Auf frischen DBs existiert sie bereits (aus dem CREATE) → Fehler ignorieren.
+	// Migrationen für bestehende Datenbanken: fehlende Spalten nachrüsten.
+	// Auf frischen DBs existieren sie bereits (aus dem CREATE) → Fehler ignorieren.
 	_, _ = db.Exec(`ALTER TABLE links ADD COLUMN public INTEGER NOT NULL DEFAULT 0`)
+	_, _ = db.Exec(`ALTER TABLE categories ADD COLUMN layout_span INTEGER NOT NULL DEFAULT 12`)
 
 	var n int
 	if err := db.QueryRow(`SELECT COUNT(*) FROM categories`).Scan(&n); err != nil {
@@ -68,10 +70,11 @@ func openDB(dataDir string) (*sql.DB, error) {
 
 const schema = `
 CREATE TABLE IF NOT EXISTS categories (
-	id         INTEGER PRIMARY KEY AUTOINCREMENT,
-	name       TEXT NOT NULL UNIQUE,
-	color      TEXT NOT NULL DEFAULT '#4f5bd5',
-	sort_order INTEGER NOT NULL DEFAULT 0
+	id          INTEGER PRIMARY KEY AUTOINCREMENT,
+	name        TEXT NOT NULL UNIQUE,
+	color       TEXT NOT NULL DEFAULT '#4f5bd5',
+	sort_order  INTEGER NOT NULL DEFAULT 0,
+	layout_span INTEGER NOT NULL DEFAULT 12
 );
 CREATE TABLE IF NOT EXISTS links (
 	id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -92,7 +95,7 @@ CREATE TABLE IF NOT EXISTS settings (
 `
 
 func listCategories(db *sql.DB) ([]Category, error) {
-	rows, err := db.Query(`SELECT id, name, color, sort_order FROM categories ORDER BY sort_order, name`)
+	rows, err := db.Query(`SELECT id, name, color, sort_order, layout_span FROM categories ORDER BY sort_order, name`)
 	if err != nil {
 		return nil, err
 	}
@@ -101,9 +104,10 @@ func listCategories(db *sql.DB) ([]Category, error) {
 	var out []Category
 	for rows.Next() {
 		var c Category
-		if err := rows.Scan(&c.ID, &c.Name, &c.Color, &c.SortOrder); err != nil {
+		if err := rows.Scan(&c.ID, &c.Name, &c.Color, &c.SortOrder, &c.Span); err != nil {
 			return nil, err
 		}
+		c.Span = clampSpan(c.Span)
 		out = append(out, c)
 	}
 	return out, rows.Err()

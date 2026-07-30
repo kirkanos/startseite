@@ -13,11 +13,18 @@ keine nativen Kompilier-Abhängigkeiten.
 - 🍪 **„Angemeldet bleiben"** — HMAC-signiertes Session-Cookie, 30 Tage
 - 🖼️ **Echte Screenshot-Vorschau** jeder Seite (Chromium via chromedp)
 - 🗂️ **Kategorien** mit Farben — anlegen, umbenennen, umfärben, löschen
-- ↕️ **Drag & Drop** — Links sortieren und per Ziehen in andere Kategorien verschieben;
-  Kategorien selbst über den Ziehgriff in „Kategorien verwalten" umsortieren
-- 🎛️ **Ansicht konfigurierbar** („Ansicht" in der Kategorie-Zeile) — Spaltenzahl
-  (automatisch oder 2–6), Kartenbreite und Screenshot-Vorschauen ein/aus.
-  Alles liegt **in der Datenbank**, gilt also auf jedem Rechner gleich
+- ↕️ **Drag & Drop** — Links sortieren und per Ziehen in andere Kategorien verschieben
+- 🎛️ **Ansicht bearbeiten** — ein Modus (Knopf „Ansicht bearbeiten"), in dem sich
+  das ganze Dashboard-Layout einrichten lässt:
+  - **Kategorien anordnen** — Sektionen am Griff in der Übersicht verschieben
+    (alternativ die Zeilen unter „Kategorien verwalten")
+  - **Mehrere Kategorien pro Zeile** — die Breite jeder Sektion an ihrer rechten
+    Kante ziehen; sie rastet in ein **12-Spalten-Raster** (3/12 bis 12/12).
+    Was zusammen in 12 Spalten passt, steht nebeneinander
+  - **Karten** — Spaltenzahl (automatisch oder 2–6), Kartenbreite und
+    Screenshot-Vorschauen ein/aus. Bei fester Spaltenzahl bekommt jede Sektion
+    ihren Anteil, damit die Karten überall gleich breit bleiben
+  - Alles liegt **in der Datenbank**, gilt also auf jedem Rechner gleich
 - ✏️ **Links bearbeiten** — URL, Titel, Kategorie; Screenshot optional neu erzeugen
 - 🌐 **Öffentliche Links** — einzeln als „öffentlich" markierbar; ohne Login sichtbar
 - 🚪 **Login optional** — die Einstiegsseite `/` zeigt ohne Login die öffentlichen Links, nach dem Login das volle Dashboard
@@ -39,7 +46,7 @@ keine nativen Kompilier-Abhängigkeiten.
 
 ```
 data/
-├── app.db            # SQLite-Datenbank (Links, Kategorien, Ansichts-Einstellungen)
+├── app.db            # SQLite-Datenbank (Links, Kategorien inkl. Layout, Ansicht)
 ├── app.db-wal        # WAL-Journal
 └── thumbnails/       # generierte Screenshot-Vorschauen (*.jpg)
 ```

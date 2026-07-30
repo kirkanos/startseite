@@ -4,9 +4,12 @@
 package main
 
 import (
+	"fmt"
+	"html/template"
 	"net/http"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -16,7 +19,36 @@ type Group struct {
 	ID    int64
 	Name  string
 	Color string
+	Span  int // Breite im 12-Spalten-Raster
+	Cols  int // Kartenspalten in dieser Sektion; 0 = automatisch
 	Links []Link
+}
+
+// Style liefert die Rasterwerte als Inline-Style. Beide Werte sind Zahlen aus
+// der eigenen Datenbank, daher unbedenklich als template.CSS.
+func (g Group) Style() template.CSS {
+	return template.CSS(fmt.Sprintf("--span:%d;--sec-cols:%d", g.Span, g.Cols))
+}
+
+// Dot liefert die Farbe des Kategoriepunkts. Nur geprüfte Hex-Farben werden
+// durchgereicht; alles andere (z. B. "Ohne Kategorie") bekommt die Standardfarbe.
+func (g Group) Dot() template.CSS {
+	if isHexColor(g.Color) {
+		return template.CSS("background:" + g.Color)
+	}
+	return template.CSS("background:var(--ink-faint)")
+}
+
+func isHexColor(s string) bool {
+	if len(s) != 4 && len(s) != 7 || s[0] != '#' {
+		return false
+	}
+	for _, r := range s[1:] {
+		if !strings.ContainsRune("0123456789abcdefABCDEF", r) {
+			return false
+		}
+	}
+	return true
 }
 
 type indexData struct {
@@ -59,6 +91,7 @@ func (a *App) handleIndex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	lang := detectLang(r)
+	view := loadSettings(a.db)
 	cats, err := listCategories(a.db)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -82,15 +115,21 @@ func (a *App) handleIndex(w http.ResponseWriter, r *http.Request) {
 	var groups []Group
 	if len(links) > 0 {
 		for _, c := range cats {
-			groups = append(groups, Group{ID: c.ID, Name: c.Name, Color: c.Color, Links: byCat[c.ID]})
+			groups = append(groups, Group{
+				ID: c.ID, Name: c.Name, Color: c.Color,
+				Span: c.Span, Cols: sectionCols(view.Columns, c.Span), Links: byCat[c.ID],
+			})
 		}
-		groups = append(groups, Group{ID: 0, Name: tr(lang, "uncategorized"), Color: "var(--ink-faint)", Links: byCat[0]})
+		groups = append(groups, Group{
+			ID: 0, Name: tr(lang, "uncategorized"), Color: "var(--ink-faint)",
+			Span: view.UncatSpan, Cols: sectionCols(view.Columns, view.UncatSpan), Links: byCat[0],
+		})
 	}
 
 	render(w, indexTmpl, http.StatusOK, indexData{
 		i18n:       i18n{Lang: lang},
 		Title:      "Startseite",
-		View:       loadSettings(a.db),
+		View:       view,
 		Categories: cats,
 		Groups:     groups,
 		Total:      len(links),

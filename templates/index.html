@@ -35,8 +35,8 @@
     {{end}}
     <span class="cats-right">
       <button class="cat" id="view-toggle" title="{{.T "view_options"}}">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 5h18M3 12h18M3 19h18"/><circle cx="8" cy="5" r="2" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"/><circle cx="10" cy="19" r="2" fill="currentColor" stroke="none"/></svg>
-        {{.T "view"}}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        <span id="view-toggle-label">{{.T "edit_view"}}</span>
       </button>
       <button class="cat" id="manage-toggle">{{.T "manage_categories"}}</button>
     </span>
@@ -59,6 +59,7 @@
       </label>
       <label class="opt check"><input type="checkbox" id="opt-thumbs" {{if .View.ShowThumbs}}checked{{end}}><span>{{.T "show_thumbs"}}</span></label>
     </div>
+    <p class="hint">{{.T "edit_view_hint"}}</p>
     <p class="hint">{{.T "view_saved_hint"}}</p>
   </div>
 
@@ -91,14 +92,22 @@
   <p class="empty" id="empty-all" {{if .Groups}}hidden{{end}}>{{.T "no_links_yet"}}</p>
   <p class="empty" id="empty-search" hidden>{{.T "no_matches"}}</p>
 
+  <div class="sections" id="sections">
   {{range .Groups}}
-  <section class="section" data-cat="{{.ID}}">
+  <section class="section" data-cat="{{.ID}}" data-span="{{.Span}}" style="{{.Style}}">
     <div class="section-head">
-      <span class="dot" style="background:{{.Color}}"></span>
+      {{if .ID}}
+      <span class="sec-grip" title="{{$.T "reorder_category"}}" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>
+      </span>
+      {{end}}
+      <span class="dot" style="{{.Dot}}"></span>
       <h2>{{.Name}}</h2>
       <span class="count">{{len .Links}}</span>
       <span class="rule"></span>
+      <span class="sec-width" aria-hidden="true">{{.Span}}/12</span>
     </div>
+    <span class="sec-resize" title="{{$.T "resize_category"}}" aria-hidden="true"></span>
     <div class="grid">
       {{range .Links}}
       <div class="card" draggable="true" data-id="{{.ID}}" data-cat="{{.CategoryID}}" data-url="{{.URL}}" data-title="{{.Title}}" data-public="{{.Public}}" data-search="{{lower .Title}} {{lower (host .URL)}}">
@@ -132,6 +141,7 @@
     </div>
   </section>
   {{end}}
+  </div>
 </div>
 
 <dialog class="add-dialog" id="add-dialog">
@@ -183,6 +193,7 @@
     saving: {{.T "saving"}} + '',
     generating: {{.T "generating_preview"}} + '',
     manage: {{.T "manage_categories"}} + '',
+    editView: {{.T "edit_view"}} + '',
     done: {{.T "done"}} + ''
   };
 
@@ -222,22 +233,26 @@
   });
 
   // ---------- Kategorien verwalten ----------
-  const wrap = document.querySelector('.wrap');
+  const sectionsEl = document.getElementById('sections');
   const mt = document.getElementById('manage-toggle');
   const mp = document.getElementById('manage-panel');
   const vt = document.getElementById('view-toggle');
+  const vtLabel = document.getElementById('view-toggle-label');
   const vp = document.getElementById('view-panel');
   mt.addEventListener('click', () => {
     mp.hidden = !mp.hidden;
     mt.textContent = mp.hidden ? T.manage : T.done;
-    if (!mp.hidden) vp.hidden = true;
   });
 
-  // ---------- Ansicht einstellen (in der Datenbank gespeichert) ----------
+  // ---------- Ansicht bearbeiten ----------
+  // Im Bearbeiten-Modus erscheinen das Einstellungs-Panel sowie Griff und
+  // Breiten-Anfasser an jeder Kategorie-Sektion.
   vt.addEventListener('click', () => {
-    vp.hidden = !vp.hidden;
-    vt.classList.toggle('active', !vp.hidden);
-    if (!vp.hidden) { mp.hidden = true; mt.textContent = T.manage; }
+    const on = !document.body.classList.contains('edit-mode');
+    document.body.classList.toggle('edit-mode', on);
+    vt.classList.toggle('active', on);
+    vp.hidden = !on;
+    vtLabel.textContent = on ? T.done : T.editView;
   });
 
   const optCols = document.getElementById('opt-cols');
@@ -250,6 +265,16 @@
     document.body.dataset.thumbs = optThumbs.checked ? 'on' : 'off';
     // Die Kartenbreite greift nur, wenn die Spalten automatisch verteilt werden.
     optSize.disabled = optCols.value !== 'auto';
+    document.querySelectorAll('.section').forEach(applySectionCols);
+  }
+
+  // applySectionCols verteilt eine feste Spaltenzahl anteilig auf die Sektion,
+  // damit die Karten überall gleich breit bleiben (Serverseite: sectionCols).
+  function applySectionCols(sec) {
+    const n = parseInt(optCols.value, 10);
+    if (isNaN(n)) return;
+    const span = parseInt(sec.dataset.span, 10) || 12;
+    sec.style.setProperty('--sec-cols', String(Math.max(1, Math.round((n * span) / 12))));
   }
 
   function saveView() {
@@ -292,7 +317,7 @@
       row.classList.remove('dragging');
       row.draggable = false;
       dragRow = null;
-      persistCategoryOrder();
+      persistCategoryOrder([...catRows.querySelectorAll('.cat-row')].map((r) => r.dataset.id));
     });
   });
   document.addEventListener('pointerup', () => {
@@ -306,25 +331,118 @@
     else catRows.insertBefore(dragRow, after);
   });
 
-  // persistCategoryOrder zieht Chips und Sektionen mit und speichert die Reihenfolge.
-  function persistCategoryOrder() {
-    const ids = [...catRows.querySelectorAll('.cat-row')].map((r) => r.dataset.id);
+  // persistCategoryOrder überträgt eine Reihenfolge auf Chips, Sektionen und
+  // Verwaltungszeilen — egal, wo sie gezogen wurde — und speichert sie.
+  function persistCategoryOrder(ids) {
     const nav = document.querySelector('.cats');
     const navRight = document.querySelector('.cats-right');
-    const uncat = document.querySelector('.section[data-cat="0"]');
+    const uncat = sectionsEl.querySelector('.section[data-cat="0"]');
     for (const id of ids) {
       const chip = nav.querySelector('.cat[data-cat="' + id + '"]');
       if (chip) nav.insertBefore(chip, navRight);
-      const sec = wrap.querySelector('.section[data-cat="' + id + '"]');
-      if (sec) wrap.appendChild(sec); // Sektionen sind die letzten Kinder von .wrap
+      const row = catRows.querySelector('.cat-row[data-id="' + id + '"]');
+      if (row) catRows.appendChild(row);
+      const sec = sectionsEl.querySelector('.section[data-cat="' + id + '"]');
+      if (sec) sectionsEl.appendChild(sec);
     }
-    if (uncat) wrap.appendChild(uncat); // "Ohne Kategorie" bleibt am Ende
+    if (uncat) sectionsEl.appendChild(uncat); // "Ohne Kategorie" bleibt am Ende
     fetch('/categories/reorder', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(ids.map((id, i) => ({ id: parseInt(id, 10), sort_order: i })))
     }).then((r) => { if (!r.ok) location.reload(); }).catch(() => location.reload());
   }
+
+  // ---------- Drag & Drop: Sektionen in der Übersicht anordnen ----------
+  // Mehrere Kategorien teilen sich eine Zeile, wenn ihre Breiten zusammen
+  // höchstens 12 Rasterspalten belegen.
+  let dragSec = null;
+
+  function sectionIds() {
+    return [...sectionsEl.querySelectorAll('.section')]
+      .map((s) => s.dataset.cat).filter((id) => id !== '0');
+  }
+
+  function sectionAfter(x, y) {
+    let closest = { d: Infinity, el: null };
+    for (const el of sectionsEl.querySelectorAll('.section:not(.dragging)')) {
+      const r = el.getBoundingClientRect();
+      const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      if (y < r.top || (y <= r.bottom && x < cx)) {
+        const d = Math.hypot(x - cx, y - cy);
+        if (d < closest.d) closest = { d, el };
+      }
+    }
+    return closest.el;
+  }
+
+  sectionsEl.querySelectorAll('.sec-grip').forEach((grip) => {
+    const sec = grip.closest('.section');
+    grip.addEventListener('pointerdown', () => { sec.draggable = true; });
+    sec.addEventListener('dragstart', (e) => {
+      if (e.target !== sec) return; // Karten-Drag innerhalb der Sektion nicht kapern
+      dragSec = sec;
+      e.dataTransfer.effectAllowed = 'move';
+      requestAnimationFrame(() => sec.classList.add('dragging'));
+    });
+    sec.addEventListener('dragend', () => {
+      sec.classList.remove('dragging');
+      sec.draggable = false;
+      if (!dragSec) return;
+      dragSec = null;
+      persistCategoryOrder(sectionIds());
+    });
+  });
+  document.addEventListener('pointerup', () => {
+    if (!dragSec) sectionsEl.querySelectorAll('.section').forEach((s) => { s.draggable = false; });
+  });
+  sectionsEl.addEventListener('dragover', (e) => {
+    if (!dragSec) return;
+    e.preventDefault();
+    const after = sectionAfter(e.clientX, e.clientY);
+    const uncat = sectionsEl.querySelector('.section[data-cat="0"]');
+    if (after) sectionsEl.insertBefore(dragSec, after);
+    else if (uncat) sectionsEl.insertBefore(dragSec, uncat);
+    else sectionsEl.appendChild(dragSec);
+  });
+
+  // ---------- Breite einer Sektion ziehen ----------
+  function setSpan(sec, n) {
+    const span = Math.min(12, Math.max(3, n));
+    if (String(span) === sec.dataset.span) return;
+    sec.dataset.span = String(span);
+    sec.style.setProperty('--span', String(span));
+    const label = sec.querySelector('.sec-width');
+    if (label) label.textContent = span + '/12';
+    applySectionCols(sec);
+  }
+
+  sectionsEl.querySelectorAll('.sec-resize').forEach((handle) => {
+    const sec = handle.closest('.section');
+    let unit = 0, left = 0, gap = 0;
+    handle.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      handle.setPointerCapture(e.pointerId);
+      gap = parseFloat(getComputedStyle(sectionsEl).columnGap) || 0;
+      unit = (sectionsEl.getBoundingClientRect().width + gap) / 12;
+      left = sec.getBoundingClientRect().left;
+      sec.classList.add('resizing');
+    });
+    handle.addEventListener('pointermove', (e) => {
+      if (sec.classList.contains('resizing')) setSpan(sec, Math.round((e.clientX - left + gap) / unit));
+    });
+    const finish = (e) => {
+      if (!sec.classList.contains('resizing')) return;
+      sec.classList.remove('resizing');
+      handle.releasePointerCapture(e.pointerId);
+      fetch('/categories/' + sec.dataset.cat + '/span', {
+        method: 'POST',
+        body: new URLSearchParams({ span: sec.dataset.span })
+      }).then((r) => { if (!r.ok) location.reload(); }).catch(() => location.reload());
+    };
+    handle.addEventListener('pointerup', finish);
+    handle.addEventListener('pointercancel', finish);
+  });
 
   // ---------- Filter (Kategorie + Suche) ----------
   let activeCat = 'all';

@@ -91,6 +91,33 @@ func (a *App) handleEditCategory(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
+// handleCategorySpan speichert die Breite einer Kategorie-Sektion im
+// 12-Spalten-Raster der Übersicht. id 0 = Sektion "Ohne Kategorie".
+func (a *App) handleCategorySpan(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil || id < 0 {
+		http.Error(w, "Ungültige ID", http.StatusBadRequest)
+		return
+	}
+	span, err := strconv.Atoi(r.FormValue("span"))
+	if err != nil {
+		http.Error(w, "Ungültige Breite", http.StatusBadRequest)
+		return
+	}
+	span = clampSpan(span)
+
+	if id == 0 {
+		err = setSetting(a.db, "uncat_span", strconv.Itoa(span))
+	} else {
+		_, err = a.db.Exec(`UPDATE categories SET layout_span = ? WHERE id = ?`, span, id)
+	}
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 type catOrderItem struct {
 	ID        int64 `json:"id"`
 	SortOrder int   `json:"sort_order"`

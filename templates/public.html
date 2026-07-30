@@ -28,7 +28,7 @@
   <nav class="cats" aria-label="{{.T "category"}}">
     <button class="cat active" data-cat="all">{{.T "all"}} <span class="n">· {{.Total}}</span></button>
     {{range .Groups}}
-      <button class="cat" data-cat="{{.ID}}"><span class="dot" style="background:{{.Color}}"></span>{{.Name}} <span class="n">· {{len .Links}}</span></button>
+      <button class="cat" data-cat="{{.ID}}"><span class="dot" style="{{.Dot}}"></span>{{.Name}} <span class="n">· {{len .Links}}</span></button>
     {{end}}
   </nav>
   <p class="empty" id="empty-search" hidden>{{.T "no_matches"}}</p>
@@ -36,7 +36,7 @@
   {{range .Groups}}
   <section class="section" data-cat="{{.ID}}">
     <div class="section-head">
-      <span class="dot" style="background:{{.Color}}"></span>
+      <span class="dot" style="{{.Dot}}"></span>
       <h2>{{.Name}}</h2>
       <span class="count">{{len .Links}}</span>
       <span class="rule"></span>

@@ -192,17 +192,45 @@ body[data-size='s'] { --card-min: 172px; --grid-gap: 13px; }
 body[data-size='m'] { --card-min: 232px; --grid-gap: 16px; }
 body[data-size='l'] { --card-min: 300px; --grid-gap: 18px; }
 
-/* feste Spaltenzahl */
-body[data-cols='2'] .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-body[data-cols='3'] .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-body[data-cols='4'] .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-body[data-cols='5'] .grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-body[data-cols='6'] .grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+/* Feste Spaltenzahl: --sec-cols ist der auf die Sektionsbreite umgerechnete
+   Anteil (Server: sectionCols, Client: applySectionCols). */
+body:not([data-cols='auto']) .grid { grid-template-columns: repeat(var(--sec-cols, 3), minmax(0, 1fr)); }
 
 /* Auf schmalen Displays gewinnt immer die automatische Verteilung. */
 @media (max-width: 720px) {
   body[data-cols] .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 }
+
+/* ---------- Kategorie-Raster: mehrere Sektionen je Zeile ---------- */
+.sections { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 20px; row-gap: 14px; align-items: start; }
+.sections > .section { grid-column: span var(--span, 12); min-width: 0; position: relative; }
+
+@media (max-width: 860px) {
+  .sections > .section { grid-column: 1 / -1; }
+}
+
+/* ---------- Bearbeiten-Modus ---------- */
+.sec-grip, .sec-resize, .sec-width { display: none; }
+.edit-mode .sections > .section {
+  outline: 1.5px dashed color-mix(in srgb, var(--accent) 35%, transparent);
+  outline-offset: 6px; border-radius: var(--radius);
+}
+.edit-mode .sec-grip { display: grid; place-items: center; width: 20px; height: 24px; color: var(--ink-faint); cursor: grab; margin-left: -4px; touch-action: none; }
+.edit-mode .sec-grip:hover { color: var(--ink); }
+.edit-mode .sec-grip svg { width: 15px; height: 15px; display: block; pointer-events: none; }
+.edit-mode .sec-width { display: inline-block; font-size: 11px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+.edit-mode .sec-resize {
+  display: block; position: absolute; top: 30px; right: -14px; bottom: 8px; width: 10px;
+  cursor: col-resize; touch-action: none; border-radius: 5px;
+}
+.edit-mode .sec-resize::before {
+  content: ''; position: absolute; top: 0; bottom: 0; left: 3px; width: 4px; border-radius: 3px;
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.edit-mode .sec-resize:hover::before, .section.resizing .sec-resize::before { background: var(--accent); }
+.section.dragging { opacity: 0.4; }
+.section.resizing { user-select: none; }
+.section.resizing .sec-width { color: var(--accent); font-weight: 600; }
 
 /* Screenshot-Vorschauen ausgeblendet: kompakte Kartenzeilen. Der Titel darf die
    volle Breite nutzen — die Aktionen legen sich erst beim Hover darüber. */
