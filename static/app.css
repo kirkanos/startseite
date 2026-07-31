@@ -14,7 +14,11 @@
   --radius: 14px;
   --card-min: 232px;
   --grid-gap: 16px;
+  /* Die Seite nutzt die volle Fensterbreite; nur der Rand wächst mit. */
+  --page-pad: 20px;
 }
+@media (min-width: 1500px) { :root { --page-pad: 34px; } }
+@media (min-width: 2200px) { :root { --page-pad: 52px; } }
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #0e1017; --surface: #171a23; --surface-2: #1e222e; --border: #2a2f3d;
@@ -63,7 +67,7 @@ a { color: inherit; text-decoration: none; }
   background: color-mix(in srgb, var(--bg) 82%, transparent);
   backdrop-filter: blur(10px); border-bottom: 1px solid var(--border);
 }
-.topbar-inner { max-width: 1120px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; gap: 12px; }
+.topbar-inner { padding: 12px var(--page-pad); display: flex; align-items: center; gap: 12px; }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 650; letter-spacing: -0.01em; }
 .logo { width: 30px; height: 30px; border-radius: 9px; background: var(--accent); display: grid; place-items: center; color: var(--accent-ink); flex: none; }
 .logo svg { width: 17px; height: 17px; }
@@ -82,7 +86,7 @@ a { color: inherit; text-decoration: none; }
 .gh-link { padding: 8px; color: var(--ink-soft); }
 .gh-link svg { width: 16px; height: 16px; display: block; }
 
-.wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px 64px; }
+.wrap { padding: 0 var(--page-pad) 64px; }
 
 /* category chips */
 .cats { display: flex; gap: 8px; flex-wrap: wrap; margin: 26px 0 8px; align-items: center; }
@@ -205,7 +209,9 @@ body:not([data-cols='auto']) .grid { grid-template-columns: repeat(var(--sec-col
 .sections { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 20px; row-gap: 14px; align-items: start; }
 .sections > .section { grid-column: span var(--span, 12); min-width: 0; position: relative; }
 
-@media (max-width: 860px) {
+/* Unterhalb dieser Breite passen in eine halbe Sektion keine zwei Karten mehr
+   nebeneinander — dann sind volle Zeilen die bessere Aufteilung. */
+@media (max-width: 1020px) {
   .sections > .section { grid-column: 1 / -1; }
 }
 
@@ -266,7 +272,7 @@ body[data-thumbs='off'] .pub-badge-inline { display: inline; }
 .manage-panel .hint { margin: 12px 0 0; }
 
 /* Footer */
-.site-footer { max-width: 1120px; margin: 0 auto; padding: 22px 20px 36px; display: flex; align-items: center; justify-content: center; gap: 14px; font-size: 12.5px; color: var(--ink-faint); border-top: 1px solid var(--border); }
+.site-footer { margin: 0 var(--page-pad); padding: 22px 0 36px; display: flex; align-items: center; justify-content: center; gap: 14px; font-size: 12.5px; color: var(--ink-faint); border-top: 1px solid var(--border); }
 .site-footer a { color: var(--ink-faint); }
 .site-footer a:hover { color: var(--ink); }
 .site-footer .gh { display: inline-flex; }
