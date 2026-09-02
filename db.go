@@ -19,7 +19,8 @@ type Category struct {
 	Name      string
 	Color     string
 	SortOrder int
-	Span      int // Breite im 12-Spalten-Raster der Übersicht (12 = ganze Zeile)
+	Span      int  // Breite im 12-Spalten-Raster der Übersicht (12 = ganze Zeile)
+	NSFW      bool // nicht jugendfrei: standardmäßig ausgeblendet, nie ohne Login sichtbar
 }
 
 type Link struct {
@@ -54,6 +55,7 @@ func openDB(dataDir string) (*sql.DB, error) {
 	// Auf frischen DBs existieren sie bereits (aus dem CREATE) → Fehler ignorieren.
 	_, _ = db.Exec(`ALTER TABLE links ADD COLUMN public INTEGER NOT NULL DEFAULT 0`)
 	_, _ = db.Exec(`ALTER TABLE categories ADD COLUMN layout_span INTEGER NOT NULL DEFAULT 12`)
+	_, _ = db.Exec(`ALTER TABLE categories ADD COLUMN nsfw INTEGER NOT NULL DEFAULT 0`)
 
 	var n int
 	if err := db.QueryRow(`SELECT COUNT(*) FROM categories`).Scan(&n); err != nil {
@@ -76,7 +78,8 @@ CREATE TABLE IF NOT EXISTS categories (
 	name        TEXT NOT NULL UNIQUE,
 	color       TEXT NOT NULL DEFAULT '#4f5bd5',
 	sort_order  INTEGER NOT NULL DEFAULT 0,
-	layout_span INTEGER NOT NULL DEFAULT 12
+	layout_span INTEGER NOT NULL DEFAULT 12,
+	nsfw        INTEGER NOT NULL DEFAULT 0
 );
 CREATE TABLE IF NOT EXISTS links (
 	id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -97,7 +100,7 @@ CREATE TABLE IF NOT EXISTS settings (
 `
 
 func listCategories(db *sql.DB) ([]Category, error) {
-	rows, err := db.Query(`SELECT id, name, color, sort_order, layout_span FROM categories ORDER BY sort_order, name`)
+	rows, err := db.Query(`SELECT id, name, color, sort_order, layout_span, nsfw FROM categories ORDER BY sort_order, name`)
 	if err != nil {
 		return nil, err
 	}
@@ -106,10 +109,12 @@ func listCategories(db *sql.DB) ([]Category, error) {
 	var out []Category
 	for rows.Next() {
 		var c Category
-		if err := rows.Scan(&c.ID, &c.Name, &c.Color, &c.SortOrder, &c.Span); err != nil {
+		var nsfw int
+		if err := rows.Scan(&c.ID, &c.Name, &c.Color, &c.SortOrder, &c.Span, &nsfw); err != nil {
 			return nil, err
 		}
 		c.Span = clampSpan(c.Span)
+		c.NSFW = nsfw != 0
 		out = append(out, c)
 	}
 	return out, rows.Err()
@@ -140,9 +145,12 @@ func listLinks(db *sql.DB) ([]Link, error) {
 	return queryLinks(db, "")
 }
 
-// listPublicLinks liefert nur die als öffentlich markierten Links.
+// listPublicLinks liefert nur die als öffentlich markierten Links. Links in
+// NSFW-Kategorien bleiben ausgeschlossen — auch wenn sie öffentlich markiert
+// sind: die NSFW-Markierung der Kategorie hat Vorrang.
 func listPublicLinks(db *sql.DB) ([]Link, error) {
-	return queryLinks(db, "WHERE public = 1")
+	return queryLinks(db, `WHERE public = 1
+		AND COALESCE(category_id, 0) NOT IN (SELECT id FROM categories WHERE nsfw = 1)`)
 }
 
 func queryLinks(db *sql.DB, where string) ([]Link, error) {

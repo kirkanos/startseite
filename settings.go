@@ -17,11 +17,12 @@ type Settings struct {
 	Columns    string `json:"columns"`     // "auto" oder "2".."6"
 	CardSize   string `json:"card_size"`   // "s" | "m" | "l" (Kartenbreite bei "auto")
 	ShowThumbs bool   `json:"show_thumbs"` // Screenshot-Vorschauen anzeigen
+	ShowNSFW   bool   `json:"show_nsfw"`   // NSFW-Kategorien im Dashboard einblenden
 	UncatSpan  int    `json:"-"`           // Breite der Sektion "Ohne Kategorie"
 }
 
 func defaultSettings() Settings {
-	return Settings{Columns: "auto", CardSize: "m", ShowThumbs: true, UncatSpan: maxSpan}
+	return Settings{Columns: "auto", CardSize: "m", ShowThumbs: true, ShowNSFW: false, UncatSpan: maxSpan}
 }
 
 // Kategorie-Sektionen liegen in einem 12-Spalten-Raster. minSpan verhindert
@@ -57,7 +58,17 @@ func sectionCols(columns string, span int) int {
 
 // ThumbsAttr liefert den Wert für das data-thumbs-Attribut am <body>.
 func (s Settings) ThumbsAttr() string {
-	if s.ShowThumbs {
+	return onOff(s.ShowThumbs)
+}
+
+// NSFWAttr liefert den Wert für das data-nsfw-Attribut am <body>. "off"
+// blendet NSFW-Kategorien per CSS aus — Chips wie Sektionen.
+func (s Settings) NSFWAttr() string {
+	return onOff(s.ShowNSFW)
+}
+
+func onOff(b bool) string {
+	if b {
 		return "on"
 	}
 	return "off"
@@ -101,6 +112,8 @@ func loadSettings(db *sql.DB) Settings {
 			s.CardSize = v
 		case "show_thumbs":
 			s.ShowThumbs = v == "1"
+		case "show_nsfw":
+			s.ShowNSFW = v == "1"
 		case "uncat_span":
 			if n, err := strconv.Atoi(v); err == nil {
 				s.UncatSpan = n
@@ -117,6 +130,7 @@ func saveSettings(db *sql.DB, s Settings) error {
 		{"columns", s.Columns},
 		{"card_size", s.CardSize},
 		{"show_thumbs", boolStr(s.ShowThumbs)},
+		{"show_nsfw", boolStr(s.ShowNSFW)},
 	}
 	tx, err := db.Begin()
 	if err != nil {

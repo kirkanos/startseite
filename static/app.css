@@ -279,3 +279,48 @@ body[data-thumbs='off'] .pub-badge-inline { display: inline; }
 .site-footer .gh svg { width: 18px; height: 18px; display: block; }
 
 @media (prefers-reduced-motion: reduce) { .card { transition: none; } }
+
+/* ---------- NSFW-Kategorien ---------- */
+
+/* Ausgeblendet heißt: aus dem Layout raus — Chip wie Sektion. Die Sektionen
+   bleiben im HTML, damit Drag & Drop und Reihenfolge erhalten bleiben. */
+body[data-nsfw='off'] .cat[data-nsfw='1'],
+body[data-nsfw='off'] .section[data-nsfw='1'] { display: none; }
+
+/* Eingeblendet bleiben die Vorschauen unscharf und klären sich erst beim
+   Überfahren der Karte. Das Skalieren verhindert weiche Ränder. */
+.section[data-nsfw='1'] .thumb img,
+.section[data-nsfw='1'] .thumb-fallback img {
+  filter: blur(14px); transform: scale(1.1); transition: filter 0.15s ease;
+}
+.section[data-nsfw='1'] .card:hover .thumb img,
+.section[data-nsfw='1'] .card:focus-within .thumb img,
+.section[data-nsfw='1'] .card:hover .thumb-fallback img,
+.section[data-nsfw='1'] .card:focus-within .thumb-fallback img { filter: none; }
+
+/* Markierung an Chip, Sektionskopf und in der Verwaltung */
+.nsfw-tag {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.02em; line-height: 1;
+  color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+  border-radius: 999px; padding: 3px 6px; flex: none;
+}
+.nsfw-check {
+  display: inline-flex; align-items: center; gap: 6px; flex: none;
+  font-size: 11.5px; font-weight: 600; color: var(--ink-faint);
+  border: 1px solid var(--border); border-radius: 9px; padding: 0 10px; height: 36px;
+  background: var(--surface-2); cursor: pointer;
+}
+.nsfw-check input { margin: 0; accent-color: var(--danger); }
+.nsfw-check:has(input:checked) { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 45%, var(--border)); }
+.cat-add .nsfw-check { height: 38px; }
+
+/* Umschalter: durchgestrichenes Auge, solange NSFW ausgeblendet ist. */
+#nsfw-toggle svg { width: 14px; height: 14px; }
+#nsfw-toggle.active { color: var(--danger); background: color-mix(in srgb, var(--danger) 10%, transparent); border-color: transparent; }
+body[data-nsfw='on'] #nsfw-toggle .eye-slash { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .section[data-nsfw='1'] .thumb img,
+  .section[data-nsfw='1'] .thumb-fallback img { transition: none; }
+}

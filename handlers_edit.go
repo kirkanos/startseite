@@ -70,7 +70,7 @@ func (a *App) handleEditLink(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-// handleEditCategory ändert Name und Farbe einer Kategorie.
+// handleEditCategory ändert Name, Farbe und NSFW-Markierung einer Kategorie.
 func (a *App) handleEditCategory(w http.ResponseWriter, r *http.Request) {
 	id, ok := pathID(r)
 	if !ok {
@@ -87,7 +87,10 @@ func (a *App) handleEditCategory(w http.ResponseWriter, r *http.Request) {
 		color = "#4f5bd5"
 	}
 	// Bei doppeltem Namen (UNIQUE) schlägt das Update fehl — still ignorieren.
-	_, _ = a.db.Exec(`UPDATE categories SET name = ?, color = ? WHERE id = ?`, name, color, id)
+	_, _ = a.db.Exec(
+		`UPDATE categories SET name = ?, color = ?, nsfw = ? WHERE id = ?`,
+		name, color, boolInt(r.FormValue("nsfw") != ""), id,
+	)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 

@@ -27,6 +27,11 @@ keine nativen Kompilier-Abhängigkeiten.
   - Alles liegt **in der Datenbank**, gilt also auf jedem Rechner gleich
 - ✏️ **Links bearbeiten** — URL, Titel, Kategorie; Screenshot optional neu erzeugen
 - 🌐 **Öffentliche Links** — einzeln als „öffentlich" markierbar; ohne Login sichtbar
+- 🔞 **NSFW-Kategorien** — Kategorien lassen sich unter „Kategorien verwalten" als
+  NSFW markieren. Sie sind im Dashboard standardmäßig ausgeblendet (Knopf „NSFW
+  einblenden" in der Kategoriezeile), ihre Vorschauen bleiben unscharf bis zum
+  Überfahren der Karte — und ohne Login sind sie **nie** sichtbar, auch dann nicht,
+  wenn einzelne Links darin als öffentlich markiert sind
 - 🚪 **Login optional** — die Einstiegsseite `/` zeigt ohne Login die öffentlichen Links, nach dem Login das volle Dashboard
 - 🌍 **Deutsch / Englisch** — Umschalter „DE | EN" in der Kopfzeile; die Wahl wird im Cookie gemerkt
 - 🔎 Suche und Kategorie-Filter (clientseitig, ohne Reload)
@@ -46,7 +51,7 @@ keine nativen Kompilier-Abhängigkeiten.
 
 ```
 data/
-├── app.db            # SQLite-Datenbank (Links, Kategorien inkl. Layout, Ansicht)
+├── app.db            # SQLite-Datenbank (Links, Kategorien inkl. Layout & NSFW, Ansicht)
 ├── app.db-wal        # WAL-Journal
 └── thumbnails/       # generierte Screenshot-Vorschauen (*.jpg)
 ```
@@ -150,6 +155,10 @@ Benötigte Woodpecker-Secrets: `sops_age_key` (privater age-Key) und `ssh_host_l
 - Hinter einem HTTPS-Reverse-Proxy setzt der Proxy den Header `X-Forwarded-Proto:
   https`; dann werden die Cookies automatisch als `Secure` markiert.
 - Passwort ändern = neuen Hash erzeugen, `APP_PASSWORD_HASH` aktualisieren, Container neu starten.
+- **NSFW ist kein Zugriffsschutz für Fremde am selben Rechner:** Der Filter greift
+  serverseitig für Besucher ohne Login (Links *und* Thumbnails). Wer angemeldet ist,
+  kann die Kategorien jederzeit einblenden — der Zustand liegt wie die übrige
+  Ansicht in der Datenbank und gilt damit auf allen Geräten.
 
 ## Lizenz
 

@@ -19,8 +19,9 @@ type Group struct {
 	ID    int64
 	Name  string
 	Color string
-	Span  int // Breite im 12-Spalten-Raster
-	Cols  int // Kartenspalten in dieser Sektion; 0 = automatisch
+	Span  int  // Breite im 12-Spalten-Raster
+	Cols  int  // Kartenspalten in dieser Sektion; 0 = automatisch
+	NSFW  bool // Sektion nur zeigen, wenn NSFW eingeblendet ist
 	Links []Link
 }
 
@@ -110,6 +111,16 @@ func (a *App) handleIndex(w http.ResponseWriter, r *http.Request) {
 		byCat[l.CategoryID] = append(byCat[l.CategoryID], l)
 		counts[l.CategoryID]++
 	}
+	// Bei ausgeblendeten NSFW-Kategorien zählt "Alle" deren Links nicht mit —
+	// sonst stünde dort eine Zahl, zu der sichtbar nichts passt.
+	total := len(links)
+	if !view.ShowNSFW {
+		for _, c := range cats {
+			if c.NSFW {
+				total -= counts[c.ID]
+			}
+		}
+	}
 
 	// Alle Kategorien als Sektionen rendern (auch leere) — sie sind Drop-Ziele
 	// für Drag & Drop. "Ohne Kategorie" kommt zuletzt, sofern es Links gibt.
@@ -117,7 +128,7 @@ func (a *App) handleIndex(w http.ResponseWriter, r *http.Request) {
 	if len(links) > 0 {
 		for _, c := range cats {
 			groups = append(groups, Group{
-				ID: c.ID, Name: c.Name, Color: c.Color,
+				ID: c.ID, Name: c.Name, Color: c.Color, NSFW: c.NSFW,
 				Span: c.Span, Cols: sectionCols(view.Columns, c.Span), Links: byCat[c.ID],
 			})
 		}
@@ -134,7 +145,7 @@ func (a *App) handleIndex(w http.ResponseWriter, r *http.Request) {
 		Categories: cats,
 		SelectCats: sortedByName(cats),
 		Groups:     groups,
-		Total:      len(links),
+		Total:      total,
 		Counts:     counts,
 	})
 }
@@ -277,7 +288,10 @@ func (a *App) handleAddCategory(w http.ResponseWriter, r *http.Request) {
 	var maxOrder int
 	_ = a.db.QueryRow(`SELECT COALESCE(MAX(sort_order), 0) FROM categories`).Scan(&maxOrder)
 	// UNIQUE(name): doppelte Namen werden hier stillschweigend ignoriert.
-	_, _ = a.db.Exec(`INSERT INTO categories (name, color, sort_order) VALUES (?, ?, ?)`, name, color, maxOrder+1)
+	_, _ = a.db.Exec(
+		`INSERT INTO categories (name, color, sort_order, nsfw) VALUES (?, ?, ?, ?)`,
+		name, color, maxOrder+1, boolInt(r.FormValue("nsfw") != ""),
+	)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
@@ -300,10 +314,14 @@ func (a *App) handleDeleteCategory(w http.ResponseWriter, r *http.Request) {
 func (a *App) handleThumbnail(w http.ResponseWriter, r *http.Request) {
 	name := filepath.Base(r.PathValue("file")) // schützt vor Path-Traversal
 
-	// Ohne Login nur Thumbnails ausliefern, die zu einem öffentlichen Link gehören.
+	// Ohne Login nur Thumbnails ausliefern, die zu einem öffentlichen Link außerhalb
+	// einer NSFW-Kategorie gehören — passend zu listPublicLinks.
 	if !a.authed(r) {
 		var n int
-		_ = a.db.QueryRow(`SELECT COUNT(*) FROM links WHERE thumbnail = ? AND public = 1`, name).Scan(&n)
+		_ = a.db.QueryRow(`
+			SELECT COUNT(*) FROM links l
+			LEFT JOIN categories c ON c.id = l.category_id
+			WHERE l.thumbnail = ? AND l.public = 1 AND COALESCE(c.nsfw, 0) = 0`, name).Scan(&n)
 		if n == 0 {
 			http.NotFound(w, r)
 			return
