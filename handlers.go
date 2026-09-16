@@ -16,13 +16,47 @@ import (
 // ---- Views ----
 
 type Group struct {
-	ID    int64
-	Name  string
-	Color string
-	Span  int  // Breite im 12-Spalten-Raster
-	Cols  int  // Kartenspalten in dieser Sektion; 0 = automatisch
-	NSFW  bool // Sektion nur zeigen, wenn NSFW eingeblendet ist
-	Links []Link
+	ID        int64
+	Name      string
+	Color     string
+	Icon      icon // aufgelöstes Symbol der Kategorie; leer = Farbpunkt
+	Span      int  // Breite im 12-Spalten-Raster
+	Cols      int  // Kartenspalten in dieser Sektion; 0 = automatisch
+	NSFW      bool // Sektion nur zeigen, wenn NSFW eingeblendet ist
+	Collapsed bool // eingeklappt: nur die Kopfzeile ist zu sehen
+	Links     []LinkView
+}
+
+// LinkView ist ein Link samt aufgelöstem Symbol — die Auflösung passiert einmal
+// im Handler, damit die Templates nichts nachschlagen müssen.
+type LinkView struct {
+	Link
+	Icon icon
+}
+
+// CategoryView ist eine Kategorie samt aufgelöstem Symbol. Icon bleibt die
+// rohe Kennung (die Formulare im Verwalten-Panel brauchen sie), IconView ist
+// das, was gezeichnet wird.
+type CategoryView struct {
+	Category
+	IconView icon
+}
+
+func (a *App) categoryViews(cats []Category) []CategoryView {
+	out := make([]CategoryView, 0, len(cats))
+	for _, c := range cats {
+		out = append(out, CategoryView{Category: c, IconView: a.lookupIcon(c.Icon)})
+	}
+	return out
+}
+
+// linkViews löst die Symbole einer Linkliste auf (nur aus dem Cache, ohne Netz).
+func (a *App) linkViews(links []Link) []LinkView {
+	out := make([]LinkView, 0, len(links))
+	for _, l := range links {
+		out = append(out, LinkView{Link: l, Icon: a.lookupIcon(l.Icon)})
+	}
+	return out
 }
 
 // Style liefert die Rasterwerte als Inline-Style. Beide Werte sind Zahlen aus
@@ -66,12 +100,13 @@ func isHexColor(s string) bool {
 type indexData struct {
 	i18n
 	Title      string
-	View       Settings   // Ansichts-Einstellungen aus der Datenbank
-	Categories []Category // in Layout-Reihenfolge (Chips, Verwalten-Panel)
-	SelectCats []Category // alphabetisch (Auswahllisten in den Dialogen)
+	View       Settings       // Ansichts-Einstellungen aus der Datenbank
+	Categories []CategoryView // in Layout-Reihenfolge (Chips, Verwalten-Panel)
+	SelectCats []Category     // alphabetisch (Auswahllisten in den Dialogen)
 	Groups     []Group
 	Total      int
 	Counts     map[int64]int
+	Themes     []ThemeOption // Paletten für die Design-Auswahl
 }
 
 // ---- Auth / Login ----
@@ -140,12 +175,13 @@ func (a *App) handleIndex(w http.ResponseWriter, r *http.Request) {
 		for _, c := range cats {
 			groups = append(groups, Group{
 				ID: c.ID, Name: c.Name, Color: c.Color, NSFW: c.NSFW,
-				Span: c.Span, Cols: sectionCols(view.Columns, c.Span), Links: byCat[c.ID],
+				Icon: a.lookupIcon(c.Icon), Collapsed: c.Collapsed,
+				Span: c.Span, Cols: sectionCols(view.Columns, c.Span), Links: a.linkViews(byCat[c.ID]),
 			})
 		}
 		groups = append(groups, Group{
 			ID: 0, Name: tr(lang, "uncategorized"), Color: "var(--ink-faint)",
-			Span: view.UncatSpan, Cols: sectionCols(view.Columns, view.UncatSpan), Links: byCat[0],
+			Span: view.UncatSpan, Cols: sectionCols(view.Columns, view.UncatSpan), Links: a.linkViews(byCat[0]),
 		})
 	}
 
@@ -153,7 +189,8 @@ func (a *App) handleIndex(w http.ResponseWriter, r *http.Request) {
 		i18n:       i18n{Lang: lang},
 		Title:      "Startseite",
 		View:       view,
-		Categories: cats,
+		Categories: a.categoryViews(cats),
+		Themes:     paletteThemes(),
 		SelectCats: sortedByName(cats),
 		Groups:     groups,
 		Total:      total,
@@ -195,11 +232,14 @@ func (a *App) renderPublic(w http.ResponseWriter, r *http.Request, status int, l
 	var groups []Group
 	for _, c := range cats {
 		if ls := byCat[c.ID]; len(ls) > 0 {
-			groups = append(groups, Group{ID: c.ID, Name: c.Name, Color: c.Color, Links: ls})
+			groups = append(groups, Group{
+				ID: c.ID, Name: c.Name, Color: c.Color,
+				Icon: a.lookupIcon(c.Icon), Collapsed: c.Collapsed, Links: a.linkViews(ls),
+			})
 		}
 	}
 	if ls := byCat[0]; len(ls) > 0 {
-		groups = append(groups, Group{ID: 0, Name: tr(lang, "uncategorized"), Color: "var(--ink-faint)", Links: ls})
+		groups = append(groups, Group{ID: 0, Name: tr(lang, "uncategorized"), Color: "var(--ink-faint)", Links: a.linkViews(ls)})
 	}
 
 	// Layout und Kartenform bleiben öffentlich auf dem Standard — nur das
@@ -237,16 +277,18 @@ func (a *App) handleAddLink(w http.ResponseWriter, r *http.Request) {
 	}
 	thumb := a.captureThumbnail(rawURL)
 
+	iconSpec := cleanIconSpec(r.FormValue("icon"))
 	_, err := a.db.Exec(
-		`INSERT INTO links (url, title, description, favicon, thumbnail, category_id, public, created_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		rawURL, title, nullify(meta.Description), nullify(meta.Favicon), nullify(thumb), catID,
+		`INSERT INTO links (url, title, description, favicon, icon, thumbnail, category_id, public, created_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		rawURL, title, nullify(meta.Description), nullify(meta.Favicon), iconSpec, nullify(thumb), catID,
 		boolInt(r.FormValue("public") != ""), time.Now().Unix(),
 	)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	a.warmIcon(iconSpec)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
@@ -301,13 +343,15 @@ func (a *App) handleAddCategory(w http.ResponseWriter, r *http.Request) {
 	if color == "" {
 		color = "#4f5bd5"
 	}
+	iconSpec := cleanIconSpec(r.FormValue("icon"))
 	var maxOrder int
 	_ = a.db.QueryRow(`SELECT COALESCE(MAX(sort_order), 0) FROM categories`).Scan(&maxOrder)
 	// UNIQUE(name): doppelte Namen werden hier stillschweigend ignoriert.
 	_, _ = a.db.Exec(
-		`INSERT INTO categories (name, color, sort_order, nsfw) VALUES (?, ?, ?, ?)`,
-		name, color, maxOrder+1, boolInt(r.FormValue("nsfw") != ""),
+		`INSERT INTO categories (name, color, icon, sort_order, nsfw) VALUES (?, ?, ?, ?, ?)`,
+		name, color, iconSpec, maxOrder+1, boolInt(r.FormValue("nsfw") != ""),
 	)
+	a.warmIcon(iconSpec)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 

@@ -31,7 +31,7 @@
   <nav class="cats" aria-label="{{.T "category"}}">
     <button class="cat active" data-cat="all">{{.T "all"}} <span class="n">· {{.Total}}</span></button>
     {{range .Categories}}
-      <button class="cat" data-cat="{{.ID}}" {{if .NSFW}}data-nsfw="1"{{end}}><span class="dot" style="background:{{.Color}}"></span>{{.Name}}{{if .NSFW}} <span class="nsfw-tag">{{$.T "nsfw_short"}}</span>{{end}} <span class="n">· {{index $.Counts .ID}}</span></button>
+      <button class="cat" data-cat="{{.ID}}" {{if .NSFW}}data-nsfw="1"{{end}}>{{template "icon" .IconView}}<span class="dot" style="background:{{.Color}}"></span>{{.Name}}{{if .NSFW}} <span class="nsfw-tag">{{$.T "nsfw_short"}}</span>{{end}} <span class="n">· {{index $.Counts .ID}}</span></button>
     {{end}}
     <span class="cats-right">
       <button class="cat{{if .View.ShowNSFW}} active{{end}}" id="nsfw-toggle" title="{{.T "nsfw_hint"}}" aria-pressed="{{if .View.ShowNSFW}}true{{else}}false{{end}}">
@@ -73,7 +73,9 @@
           <option value="auto" {{if eq .View.Theme "auto"}}selected{{end}}>{{.T "theme_auto"}}</option>
           <option value="light" {{if eq .View.Theme "light"}}selected{{end}}>{{.T "theme_light"}}</option>
           <option value="dark" {{if eq .View.Theme "dark"}}selected{{end}}>{{.T "theme_dark"}}</option>
-          <option value="dashy" {{if eq .View.Theme "dashy"}}selected{{end}}>{{.T "theme_dashy"}}</option>
+          <optgroup label="{{.T "theme_dashy_group"}}">
+            {{range .Themes}}<option value="{{.Name}}" {{if eq $.View.Theme .Name}}selected{{end}}>{{.Label}}</option>{{end}}
+          </optgroup>
         </select>
       </label>
     </div>
@@ -86,6 +88,11 @@
     <form class="cat-add" method="POST" action="/categories">
       <input name="name" placeholder="{{.T "new_category"}}" required>
       <input name="color" type="color" value="#4f5bd5" title="{{.T "color"}}">
+      <span class="icon-field">
+        <span class="preview" data-preview></span>
+        <input name="icon" class="mono" placeholder="{{.T "icon_placeholder"}}" autocomplete="off" size="12">
+        <button class="btn ghost" type="button" data-icon-pick>{{.T "choose"}}</button>
+      </span>
       <label class="nsfw-check" title="{{.T "nsfw_category"}}"><input type="checkbox" name="nsfw"><span>{{.T "nsfw"}}</span></label>
       <button class="btn primary" type="submit">{{.T "create"}}</button>
     </form>
@@ -99,6 +106,11 @@
         <form class="cat-edit" method="POST" action="/categories/{{.ID}}/edit">
           <input type="color" name="color" value="{{.Color}}" title="{{$.T "color"}}">
           <input type="text" name="name" value="{{.Name}}" aria-label="{{$.T "category_name_label"}}" required>
+          <span class="icon-field">
+            <span class="preview" data-preview>{{template "icon" .IconView}}</span>
+            <input name="icon" class="mono" value="{{.Icon}}" placeholder="{{$.T "icon_placeholder"}}" autocomplete="off" size="12" aria-label="{{$.T "icon"}}">
+            <button class="btn ghost" type="button" data-icon-pick>{{$.T "choose"}}</button>
+          </span>
           <label class="nsfw-check" title="{{$.T "nsfw_category"}}"><input type="checkbox" name="nsfw" {{if .NSFW}}checked{{end}}><span>{{$.T "nsfw"}}</span></label>
           <button class="btn ghost" type="submit">{{$.T "save"}}</button>
         </form>
@@ -115,13 +127,17 @@
 
   <div class="sections" id="sections">
   {{range .Groups}}
-  <section class="section" data-cat="{{.ID}}" data-span="{{.Span}}" {{if .NSFW}}data-nsfw="1"{{end}} style="{{.Style}}">
+  <section class="section{{if .Collapsed}} collapsed{{end}}" data-cat="{{.ID}}" data-span="{{.Span}}" {{if .NSFW}}data-nsfw="1"{{end}} style="{{.Style}}">
     <div class="section-head">
       {{if .ID}}
       <span class="sec-grip" title="{{$.T "reorder_category"}}" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>
       </span>
       {{end}}
+      <button class="sec-fold" type="button" title="{{$.T "collapse"}}" aria-expanded="{{if .Collapsed}}false{{else}}true{{end}}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      {{template "icon" .Icon}}
       <span class="dot" style="{{.Dot}}"></span>
       <h2>{{.Name}}</h2>
       {{if .NSFW}}<span class="nsfw-tag" title="{{$.T "nsfw_category"}}">{{$.T "nsfw_short"}}</span>{{end}}
@@ -132,7 +148,7 @@
     <span class="sec-resize" title="{{$.T "resize_category"}}" aria-hidden="true"></span>
     <div class="grid">
       {{range .Links}}
-      <div class="card" draggable="true" data-id="{{.ID}}" data-cat="{{.CategoryID}}" data-url="{{.URL}}" data-title="{{.Title}}" data-public="{{.Public}}" data-search="{{lower .Title}} {{lower (host .URL)}}">
+      <div class="card" draggable="true" data-id="{{.ID}}" data-cat="{{.CategoryID}}" data-url="{{.URL}}" data-title="{{.Title}}" data-public="{{.Public}}" data-icon="{{.Link.Icon}}" data-search="{{lower .Title}} {{lower (host .URL)}}">
         <a class="card-link" href="{{.URL}}" target="_blank" rel="noopener noreferrer" draggable="false">
           <div class="thumb">
             {{if .Public}}<span class="pub-badge" title="{{$.T "public_badge"}}">🌐</span>{{end}}
@@ -145,7 +161,7 @@
             {{end}}
           </div>
           <div class="card-body">
-            {{if .Favicon}}<img class="favicon" src="{{.Favicon}}" alt="" loading="lazy" data-ini="{{initials .Title}}">{{else}}<span class="favicon ph">{{initials .Title}}</span>{{end}}
+            {{if not .Icon.Empty}}{{template "icon" .Icon}}{{else if .Favicon}}<img class="favicon" src="{{.Favicon}}" alt="" loading="lazy" data-ini="{{initials .Title}}">{{else}}<span class="favicon ph">{{initials .Title}}</span>{{end}}
             <div class="meta">
               <div class="card-title">{{if .Public}}<span class="pub-badge-inline" title="{{$.T "public_badge"}}">🌐</span>{{end}}{{.Title}}</div>
               <div class="card-url mono">{{host .URL}}</div>
@@ -178,6 +194,13 @@
         {{range .SelectCats}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
       </select>
     </label>
+    <label class="field"><span>{{.T "icon"}} <em>{{.T "icon_optional"}}</em></span>
+      <span class="icon-field">
+        <span class="preview" data-preview></span>
+        <input name="icon" class="mono" placeholder="{{.T "icon_placeholder"}}" autocomplete="off">
+        <button class="btn ghost" type="button" data-icon-pick>{{.T "choose"}}</button>
+      </span>
+    </label>
     <label class="remember"><input type="checkbox" name="public"><span>{{.T "public_checkbox"}}</span></label>
     <div class="dialog-actions">
       <button class="btn ghost" type="button" id="add-cancel">{{.T "cancel"}}</button>
@@ -198,6 +221,13 @@
         {{range .SelectCats}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
       </select>
     </label>
+    <label class="field"><span>{{.T "icon"}} <em>{{.T "icon_optional"}}</em></span>
+      <span class="icon-field">
+        <span class="preview" data-preview></span>
+        <input name="icon" class="mono" placeholder="{{.T "icon_placeholder"}}" autocomplete="off">
+        <button class="btn ghost" type="button" data-icon-pick>{{.T "choose"}}</button>
+      </span>
+    </label>
     <label class="remember"><input type="checkbox" name="public"><span>{{.T "public_checkbox"}}</span></label>
     <label class="remember"><input type="checkbox" name="rescreenshot"><span>{{.T "regenerate_preview"}}</span></label>
     <div class="dialog-actions">
@@ -206,6 +236,26 @@
     </div>
     <p class="hint" id="edit-hint" hidden>{{.T "edit_saving_hint"}}</p>
   </form>
+</dialog>
+
+<dialog class="add-dialog icon-dialog" id="icon-dialog">
+  <h3>{{.T "choose_icon"}}</h3>
+  <p class="sub">{{.T "icon_dialog_sub"}}</p>
+  <div class="icon-sets" id="icon-sets">
+    <button class="cat active" type="button" data-set="sh">selfh.st</button>
+    <button class="cat" type="button" data-set="hl">dashboard-icons</button>
+    <button class="cat" type="button" data-set="si">simple-icons</button>
+    <button class="cat" type="button" data-set="mdi">Material</button>
+    <button class="cat" type="button" data-set="fa">Font Awesome</button>
+    <button class="cat" type="button" data-set="emoji">Emoji</button>
+  </div>
+  <label class="field"><input id="icon-search" type="search" placeholder="{{.T "icon_search"}}" autocomplete="off"></label>
+  <p class="icon-status" id="icon-status" hidden></p>
+  <div class="icon-results" id="icon-results"></div>
+  <div class="dialog-actions">
+    <button class="btn ghost" type="button" id="icon-clear">{{.T "icon_use_favicon"}}</button>
+    <button class="btn ghost" type="button" id="icon-cancel">{{.T "cancel"}}</button>
+  </div>
 </dialog>
 
 <script>
@@ -218,7 +268,12 @@
     editView: {{.T "edit_view"}} + '',
     done: {{.T "done"}} + '',
     showNsfw: {{.T "show_nsfw"}} + '',
-    hideNsfw: {{.T "hide_nsfw"}} + ''
+    hideNsfw: {{.T "hide_nsfw"}} + '',
+    collapse: {{.T "collapse"}} + '',
+    expand: {{.T "expand"}} + '',
+    iconSearching: {{.T "icon_searching"}} + '',
+    iconNone: {{.T "icon_no_matches"}} + '',
+    iconFailed: {{.T "icon_failed"}} + ''
   };
 
   // ---------- Dialog: hinzufügen ----------
@@ -246,6 +301,8 @@
     editForm.elements.title.value = card.dataset.title;
     editForm.elements.category_id.value = card.dataset.cat === '0' ? '' : card.dataset.cat;
     editForm.elements.public.checked = card.dataset.public === 'true';
+    editForm.elements.icon.value = card.dataset.icon || '';
+    renderPreview(editForm.elements.icon);
     editForm.elements.rescreenshot.checked = false;
     const b = document.getElementById('edit-submit');
     b.disabled = false; b.textContent = T.save;
@@ -608,6 +665,153 @@
       nEl.textContent = '· ' + (key === 'all' ? total : (counts[key] || 0));
     });
   }
+
+  // ---------- Kategorien einklappen ----------
+  // Der Zustand liegt in der Datenbank, damit er auf jedem Gerät gleich ist.
+  sectionsEl.querySelectorAll('.sec-fold').forEach((btn) => {
+    const sec = btn.closest('.section');
+    btn.addEventListener('click', () => {
+      const collapsed = sec.classList.toggle('collapsed');
+      btn.setAttribute('aria-expanded', String(!collapsed));
+      btn.title = collapsed ? T.expand : T.collapse;
+      if (sec.dataset.cat === '0') return; // "Ohne Kategorie" hat keine Zeile in der DB
+      fetch('/categories/' + sec.dataset.cat + '/collapse', {
+        method: 'POST',
+        body: new URLSearchParams({ collapsed: collapsed ? '1' : '0' })
+      }).catch(() => {});
+    });
+  });
+
+  // ---------- Symbol-Wähler ----------
+  // Die Suche läuft über den Server: er hält die Namenslisten der Sammlungen
+  // vor und liefert nur die Treffer, damit der Browser nichts laden muss.
+  const iconDlg = document.getElementById('icon-dialog');
+  const iconResults = document.getElementById('icon-results');
+  const iconSearch = document.getElementById('icon-search');
+  const iconStatus = document.getElementById('icon-status');
+  let iconTarget = null;   // das <input name="icon">, das gerade gefüllt wird
+  let iconSet = 'sh';
+  let iconSeq = 0;         // verwirft Antworten, die zu spät kommen
+
+  function previewFor(input) {
+    return input.closest('.icon-field').querySelector('[data-preview]');
+  }
+
+  // renderPreview zeigt die aktuelle Kennung neben dem Eingabefeld. Der Server
+  // liefert unter /api/icon-preview eine Weiterleitung auf die Cache-Datei.
+  function renderPreview(input) {
+    const box = previewFor(input);
+    const spec = input.value.trim();
+    box.textContent = '';
+    if (!spec) return;
+    if (!/^[a-z]/i.test(spec) && !spec.startsWith('http')) {
+      box.textContent = spec; // Emoji
+      return;
+    }
+    const img = document.createElement('img');
+    img.className = 'ic';
+    img.src = '/api/icon-preview?spec=' + encodeURIComponent(spec);
+    img.alt = '';
+    img.addEventListener('error', () => { box.textContent = '?'; });
+    box.appendChild(img);
+  }
+
+  function hitNode(hit) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'icon-hit';
+    btn.title = hit.label + ' · ' + hit.id;
+    if (hit.set === 'emoji') {
+      const span = document.createElement('span');
+      span.className = 'ic emoji';
+      span.textContent = hit.id;
+      btn.appendChild(span);
+    } else {
+      // Vorschau direkt von der Quelle: 120 Symbole durch den eigenen Server
+      // zu holen wäre zu langsam. Lokal gespeichert wird erst die Auswahl.
+      const img = document.createElement('img');
+      img.loading = 'lazy';
+      img.alt = '';
+      img.referrerPolicy = 'no-referrer';
+      img.src = hit.url;
+      img.addEventListener('error', () => { btn.remove(); });
+      btn.appendChild(img);
+    }
+    const name = document.createElement('span');
+    name.className = 'name';
+    name.textContent = hit.label;
+    btn.appendChild(name);
+    btn.addEventListener('click', () => {
+      if (iconTarget) {
+        iconTarget.value = hit.id;
+        renderPreview(iconTarget);
+        iconTarget.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      iconDlg.close();
+    });
+    return btn;
+  }
+
+  async function runIconSearch() {
+    const seq = ++iconSeq;
+    iconStatus.textContent = T.iconSearching;
+    iconStatus.hidden = false;
+    try {
+      const url = '/api/icons?set=' + encodeURIComponent(iconSet)
+        + '&q=' + encodeURIComponent(iconSearch.value.trim());
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(res.status);
+      const hits = await res.json();
+      if (seq !== iconSeq) return; // eine neuere Suche läuft bereits
+      iconResults.textContent = '';
+      for (const h of hits || []) iconResults.appendChild(hitNode(h));
+      iconStatus.hidden = (hits || []).length > 0;
+      iconStatus.textContent = T.iconNone;
+    } catch (e) {
+      if (seq !== iconSeq) return;
+      iconResults.textContent = '';
+      iconStatus.hidden = false;
+      iconStatus.textContent = T.iconFailed;
+    }
+  }
+
+  let iconDebounce;
+  iconSearch.addEventListener('input', () => {
+    clearTimeout(iconDebounce);
+    iconDebounce = setTimeout(runIconSearch, 220);
+  });
+  document.getElementById('icon-sets').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-set]');
+    if (!btn) return;
+    iconSet = btn.dataset.set;
+    document.querySelectorAll('#icon-sets .cat').forEach((c) => c.classList.toggle('active', c === btn));
+    runIconSearch();
+  });
+  document.getElementById('icon-cancel').addEventListener('click', () => iconDlg.close());
+  document.getElementById('icon-clear').addEventListener('click', () => {
+    if (iconTarget) {
+      iconTarget.value = '';
+      renderPreview(iconTarget);
+      iconTarget.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    iconDlg.close();
+  });
+
+  // Öffnen und Vorschau gelten für jedes Symbolfeld auf der Seite — auch für
+  // die Kategoriezeilen, die es mehrfach gibt.
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-icon-pick]');
+    if (!btn) return;
+    iconTarget = btn.closest('.icon-field').querySelector('input[name="icon"]');
+    iconSearch.value = '';
+    iconResults.textContent = '';
+    iconDlg.showModal();
+    runIconSearch();
+  });
+  document.addEventListener('input', (e) => {
+    if (e.target.matches('.icon-field input[name="icon"]')) renderPreview(e.target);
+  });
+  document.querySelectorAll('.icon-field input[name="icon"]').forEach(renderPreview);
 
   // ---------- Kaputte Favicons durch Initialen ersetzen ----------
   function faviconFallback(img) {

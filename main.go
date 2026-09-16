@@ -15,8 +15,9 @@ import (
 )
 
 type App struct {
-	cfg Config
-	db  *sql.DB
+	cfg   Config
+	db    *sql.DB
+	icons iconIndex // Suchindex des Symbol-Wählers, wird träge gefüllt
 }
 
 func main() {
@@ -46,6 +47,9 @@ func main() {
 	defer db.Close()
 
 	app := &App{cfg: cfg, db: db}
+	// Symbole, die noch nicht im Cache liegen, im Hintergrund nachholen —
+	// der Dienst soll deswegen nicht später starten.
+	go app.warmIcons()
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /login", app.handleLogin)
@@ -63,7 +67,11 @@ func main() {
 	mux.HandleFunc("POST /categories/{id}/edit", app.handleEditCategory)
 	mux.HandleFunc("POST /categories/{id}/delete", app.handleDeleteCategory)
 	mux.HandleFunc("POST /settings", app.handleSaveSettings)
+	mux.HandleFunc("POST /categories/{id}/collapse", app.handleCategoryCollapse)
 	mux.HandleFunc("GET /thumbnails/{file}", app.handleThumbnail)
+	mux.HandleFunc("GET /icons/{file}", app.handleIconFile)
+	mux.HandleFunc("GET /api/icons", app.handleIconSearch)
+	mux.HandleFunc("GET /api/icon-preview", app.handleIconPreview)
 	mux.Handle("GET /static/", http.FileServerFS(staticFS))
 
 	srv := &http.Server{

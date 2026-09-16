@@ -60,13 +60,15 @@ func (a *App) handleEditLink(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	iconSpec := cleanIconSpec(r.FormValue("icon"))
 	if _, err := a.db.Exec(
-		`UPDATE links SET url = ?, title = ?, favicon = ?, thumbnail = ?, category_id = ?, public = ? WHERE id = ?`,
-		newURL, title, nullify(favicon), nullify(thumb), catID, boolInt(r.FormValue("public") != ""), id,
+		`UPDATE links SET url = ?, title = ?, favicon = ?, icon = ?, thumbnail = ?, category_id = ?, public = ? WHERE id = ?`,
+		newURL, title, nullify(favicon), iconSpec, nullify(thumb), catID, boolInt(r.FormValue("public") != ""), id,
 	); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	a.warmIcon(iconSpec)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
@@ -86,11 +88,13 @@ func (a *App) handleEditCategory(w http.ResponseWriter, r *http.Request) {
 	if color == "" {
 		color = "#4f5bd5"
 	}
+	iconSpec := cleanIconSpec(r.FormValue("icon"))
 	// Bei doppeltem Namen (UNIQUE) schlägt das Update fehl — still ignorieren.
 	_, _ = a.db.Exec(
-		`UPDATE categories SET name = ?, color = ?, nsfw = ? WHERE id = ?`,
-		name, color, boolInt(r.FormValue("nsfw") != ""), id,
+		`UPDATE categories SET name = ?, color = ?, icon = ?, nsfw = ? WHERE id = ?`,
+		name, color, iconSpec, boolInt(r.FormValue("nsfw") != ""), id,
 	)
+	a.warmIcon(iconSpec)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
@@ -202,6 +206,25 @@ func (a *App) handleReorder(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if err := tx.Commit(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// handleCategoryCollapse merkt sich, ob eine Kategorie eingeklappt ist. Wie die
+// übrige Ansicht liegt der Zustand in der Datenbank und gilt damit auf jedem
+// Gerät gleich.
+func (a *App) handleCategoryCollapse(w http.ResponseWriter, r *http.Request) {
+	id, ok := pathID(r)
+	if !ok {
+		http.Error(w, "Ungültige ID", http.StatusBadRequest)
+		return
+	}
+	if _, err := a.db.Exec(
+		`UPDATE categories SET collapsed = ? WHERE id = ?`,
+		boolInt(r.FormValue("collapsed") == "1"), id,
+	); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

@@ -18,9 +18,11 @@ type Category struct {
 	ID        int64
 	Name      string
 	Color     string
+	Icon      string // Symbol-Kennung, siehe icons.go; leer = keins
 	SortOrder int
 	Span      int  // Breite im 12-Spalten-Raster der Übersicht (12 = ganze Zeile)
 	NSFW      bool // nicht jugendfrei: standardmäßig ausgeblendet, nie ohne Login sichtbar
+	Collapsed bool // Sektion im Dashboard eingeklappt
 }
 
 type Link struct {
@@ -29,6 +31,7 @@ type Link struct {
 	Title       string
 	Description string
 	Favicon     string
+	Icon        string // Symbol-Kennung, siehe icons.go; leer = das Favicon
 	Thumbnail   string
 	CategoryID  int64 // 0 = keine Kategorie
 	Public      bool
@@ -56,6 +59,9 @@ func openDB(dataDir string) (*sql.DB, error) {
 	_, _ = db.Exec(`ALTER TABLE links ADD COLUMN public INTEGER NOT NULL DEFAULT 0`)
 	_, _ = db.Exec(`ALTER TABLE categories ADD COLUMN layout_span INTEGER NOT NULL DEFAULT 12`)
 	_, _ = db.Exec(`ALTER TABLE categories ADD COLUMN nsfw INTEGER NOT NULL DEFAULT 0`)
+	_, _ = db.Exec(`ALTER TABLE categories ADD COLUMN icon TEXT NOT NULL DEFAULT ''`)
+	_, _ = db.Exec(`ALTER TABLE categories ADD COLUMN collapsed INTEGER NOT NULL DEFAULT 0`)
+	_, _ = db.Exec(`ALTER TABLE links ADD COLUMN icon TEXT NOT NULL DEFAULT ''`)
 
 	var n int
 	if err := db.QueryRow(`SELECT COUNT(*) FROM categories`).Scan(&n); err != nil {
@@ -77,9 +83,11 @@ CREATE TABLE IF NOT EXISTS categories (
 	id          INTEGER PRIMARY KEY AUTOINCREMENT,
 	name        TEXT NOT NULL UNIQUE,
 	color       TEXT NOT NULL DEFAULT '#4f5bd5',
+	icon        TEXT NOT NULL DEFAULT '',
 	sort_order  INTEGER NOT NULL DEFAULT 0,
 	layout_span INTEGER NOT NULL DEFAULT 12,
-	nsfw        INTEGER NOT NULL DEFAULT 0
+	nsfw        INTEGER NOT NULL DEFAULT 0,
+	collapsed   INTEGER NOT NULL DEFAULT 0
 );
 CREATE TABLE IF NOT EXISTS links (
 	id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -87,6 +95,7 @@ CREATE TABLE IF NOT EXISTS links (
 	title       TEXT NOT NULL,
 	description TEXT,
 	favicon     TEXT,
+	icon        TEXT NOT NULL DEFAULT '',
 	thumbnail   TEXT,
 	category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
 	sort_order  INTEGER NOT NULL DEFAULT 0,
@@ -97,10 +106,17 @@ CREATE TABLE IF NOT EXISTS settings (
 	key   TEXT PRIMARY KEY,
 	value TEXT NOT NULL
 );
+-- Geholte Symbole: Kennung -> Datei unter data/icons/
+CREATE TABLE IF NOT EXISTS icons (
+	spec       TEXT PRIMARY KEY,
+	kind       TEXT NOT NULL,
+	file       TEXT NOT NULL,
+	fetched_at INTEGER NOT NULL
+);
 `
 
 func listCategories(db *sql.DB) ([]Category, error) {
-	rows, err := db.Query(`SELECT id, name, color, sort_order, layout_span, nsfw FROM categories ORDER BY sort_order, name`)
+	rows, err := db.Query(`SELECT id, name, color, icon, sort_order, layout_span, nsfw, collapsed FROM categories ORDER BY sort_order, name`)
 	if err != nil {
 		return nil, err
 	}
@@ -109,12 +125,13 @@ func listCategories(db *sql.DB) ([]Category, error) {
 	var out []Category
 	for rows.Next() {
 		var c Category
-		var nsfw int
-		if err := rows.Scan(&c.ID, &c.Name, &c.Color, &c.SortOrder, &c.Span, &nsfw); err != nil {
+		var nsfw, collapsed int
+		if err := rows.Scan(&c.ID, &c.Name, &c.Color, &c.Icon, &c.SortOrder, &c.Span, &nsfw, &collapsed); err != nil {
 			return nil, err
 		}
 		c.Span = clampSpan(c.Span)
 		c.NSFW = nsfw != 0
+		c.Collapsed = collapsed != 0
 		out = append(out, c)
 	}
 	return out, rows.Err()
@@ -156,7 +173,7 @@ func listPublicLinks(db *sql.DB) ([]Link, error) {
 func queryLinks(db *sql.DB, where string) ([]Link, error) {
 	rows, err := db.Query(`
 		SELECT id, url, title,
-		       COALESCE(description, ''), COALESCE(favicon, ''),
+		       COALESCE(description, ''), COALESCE(favicon, ''), COALESCE(icon, ''),
 		       COALESCE(thumbnail, ''), COALESCE(category_id, 0), public, created_at
 		FROM links ` + where + `
 		ORDER BY sort_order, created_at DESC`)
@@ -169,7 +186,7 @@ func queryLinks(db *sql.DB, where string) ([]Link, error) {
 	for rows.Next() {
 		var l Link
 		var pub int
-		if err := rows.Scan(&l.ID, &l.URL, &l.Title, &l.Description, &l.Favicon,
+		if err := rows.Scan(&l.ID, &l.URL, &l.Title, &l.Description, &l.Favicon, &l.Icon,
 			&l.Thumbnail, &l.CategoryID, &pub, &l.CreatedAt); err != nil {
 			return nil, err
 		}

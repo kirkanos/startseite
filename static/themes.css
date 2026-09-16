@@ -1,0 +1,212 @@
+/* Themes nach den Farbpaletten von Dashy (MIT, Lissy93/dashy).
+ * Erzeugt von tools/gen-themes.py — nicht von Hand ändern.
+ * Struktur (Panels, Karten) kommt aus app.css; hier stehen nur Farben. */
+
+:root[data-theme='bee'] {
+  --bg: #0b1021; --surface: #1c2636; --surface-2: #607d8b4d; --panel: #0b1021; --panel-head: #05070e;
+  --ink: #c3eb5c; --ink-soft: color-mix(in srgb, #c3eb5c 82%, transparent); --ink-faint: color-mix(in srgb, #c3eb5c 55%, transparent);
+  --accent: #c3eb5c; --accent-ink: #0b1021; --accent-wash: color-mix(in srgb, #c3eb5c 18%, #0b1021);
+  --border: color-mix(in srgb, #c3eb5c 24%, transparent); --danger: #f80363;
+  --shadow: 0 1px 2px rgba(0,0,0,.35);
+}
+
+:root[data-theme='callisto'] {
+  --bg: #141b33; --surface: #141b33; --surface-2: #060913; --panel: #0b1021; --panel-head: #060913;
+  --ink: #dedede; --ink-soft: color-mix(in srgb, #dedede 82%, transparent); --ink-faint: color-mix(in srgb, #dedede 55%, transparent);
+  --accent: #00CCB4; --accent-ink: #141b33; --accent-wash: color-mix(in srgb, #00CCB4 18%, #141b33);
+  --border: color-mix(in srgb, #dedede 24%, transparent); --danger: #f80363;
+  --shadow: 0 1px 2px rgba(0,0,0,.35);
+}
+
+:root[data-theme='catppuccin'] {
+  --bg: #1e1e2e; --surface: #181825; --surface-2: #313244; --panel: #313244; --panel-head: #11111b;
+  --ink: #cdd6f4; --ink-soft: color-mix(in srgb, #cdd6f4 82%, transparent); --ink-faint: color-mix(in srgb, #cdd6f4 55%, transparent);
+  --accent: #cba6f7; --accent-ink: #1e1e2e; --accent-wash: color-mix(in srgb, #cba6f7 18%, #1e1e2e);
+  --border: color-mix(in srgb, #cdd6f4 24%, transparent); --danger: #f80363;
+  --shadow: 0 1px 2px #00000066;
+  --cat-1: #cba6f7;
+  --cat-2: #89dceb;
+  --cat-3: #a6e3a1;
+  --cat-4: #fab387;
+  --cat-5: #f5c2e7;
+}
+
+:root[data-theme='crayola'] {
+  --bg: #191d2e; --surface: #607d8b33; --surface-2: #607d8b4d; --panel: #0b1021cc; --panel-head: #070912;
+  --ink: #00f5d4; --ink-soft: color-mix(in srgb, #00f5d4 82%, transparent); --ink-faint: color-mix(in srgb, #00f5d4 55%, transparent);
+  --accent: #00f5d4; --accent-ink: #191d2e; --accent-wash: color-mix(in srgb, #00f5d4 18%, #191d2e);
+  --border: color-mix(in srgb, #00f5d4 24%, transparent); --danger: #f80363;
+  --shadow: 0 1px 2px rgba(0,0,0,.35);
+  --cat-1: #9b5de5;
+  --cat-2: #f15bb5;
+  --cat-3: #fee440;
+  --cat-4: #00bbf9;
+  --cat-5: #00f5d4;
+}
+
+:root[data-theme='cyberpunk'] {
+  --bg: #01012b; --surface: #607d8b33; --surface-2: #607d8b4d; --panel: #01012b; --panel-head: #ff2a6d;
+  --ink: #d1f7ff; --ink-soft: color-mix(in srgb, #01012b 82%, transparent); --ink-faint: color-mix(in srgb, #01012b 55%, transparent);
+  --accent: #ebeb0f; --accent-ink: #01012b; --accent-wash: color-mix(in srgb, #ebeb0f 18%, #01012b);
+  --border: color-mix(in srgb, #d1f7ff 24%, transparent); --danger: #f80363;
+  --shadow: 0 1px 2px rgba(0,0,0,.35);
+}
+
+:root[data-theme='dracula'] {
+  --bg: #44475a; --surface: #282a36; --surface-2: #191b22; --panel: #282a36; --panel-head: #282a36;
+  --ink: #98ace9; --ink-soft: color-mix(in srgb, #98ace9 82%, transparent); --ink-faint: color-mix(in srgb, #98ace9 55%, transparent);
+  --accent: #98ace9; --accent-ink: #44475a; --accent-wash: color-mix(in srgb, #98ace9 18%, #44475a);
+  --border: color-mix(in srgb, #98ace9 24%, transparent); --danger: #f80363;
+  --shadow: 1px 1px 3px #000000e6;
+  --cat-1: #8be9fd;
+  --cat-2: #50fa7b;
+  --cat-3: #ffb86c;
+  --cat-4: #ff79c6;
+  --cat-5: #bd93f9;
+}
+
+:root[data-theme='gruvbox'] {
+  --bg: #282828; --surface: #32302f; --surface-2: #504945; --panel: #3c3836; --panel-head: #1d2021;
+  --ink: #ebdbb2; --ink-soft: color-mix(in srgb, #fabd2f 82%, transparent); --ink-faint: color-mix(in srgb, #fabd2f 55%, transparent);
+  --accent: #fabd2f; --accent-ink: #282828; --accent-wash: color-mix(in srgb, #fabd2f 18%, #282828);
+  --border: color-mix(in srgb, #ebdbb2 24%, transparent); --danger: #f80363;
+  --shadow: 1px 1px 2px #00000080;
+  --cat-1: #fb4934;
+  --cat-2: #b8bb26;
+  --cat-3: #83a598;
+  --cat-4: #d3869b;
+  --cat-5: #8ec07c;
+}
+
+:root[data-theme='hacker-girl'] {
+  --bg: #000; --surface: #607d8b33; --surface-2: #607d8b4d; --panel: #0b1021cc; --panel-head: #000;
+  --ink: #e435f1; --ink-soft: color-mix(in srgb, #e435f1 82%, transparent); --ink-faint: color-mix(in srgb, #e435f1 55%, transparent);
+  --accent: #e435f1; --accent-ink: #000; --accent-wash: color-mix(in srgb, #e435f1 18%, #000);
+  --border: color-mix(in srgb, #e435f1 24%, transparent); --danger: #f80363;
+  --shadow: 0 1px 2px rgba(0,0,0,.35);
+}
+
+:root[data-theme='high-contrast-light'] {
+  --bg: #fff; --surface: #fff; --surface-2: #607d8b4d; --panel: #fff; --panel-head: #fff;
+  --ink: #000; --ink-soft: color-mix(in srgb, #000 82%, transparent); --ink-faint: color-mix(in srgb, #000 55%, transparent);
+  --accent: #000; --accent-ink: #fff; --accent-wash: color-mix(in srgb, #000 18%, #fff);
+  --border: color-mix(in srgb, #000 24%, transparent); --danger: #f80363;
+  --shadow: 0 1px 2px rgba(0,0,0,.35);
+}
+
+:root[data-theme='high-contrast-dark'] {
+  --bg: #000; --surface: #000; --surface-2: #607d8b4d; --panel: #000; --panel-head: #000;
+  --ink: #fff; --ink-soft: color-mix(in srgb, #fff 82%, transparent); --ink-faint: color-mix(in srgb, #fff 55%, transparent);
+  --accent: #fff; --accent-ink: #000; --accent-wash: color-mix(in srgb, #fff 18%, #000);
+  --border: color-mix(in srgb, #fff 24%, transparent); --danger: #f80363;
+  --shadow: 0 1px 2px rgba(0,0,0,.35);
+}
+
+:root[data-theme='midnight'] {
+  --bg: #000000; --surface: #0d0d0d; --surface-2: #1a1a1a; --panel: #0a0a0a; --panel-head: #000000;
+  --ink: #e5e5e5; --ink-soft: color-mix(in srgb, #fafafa 82%, transparent); --ink-faint: color-mix(in srgb, #fafafa 55%, transparent);
+  --accent: #e5e5e5; --accent-ink: #000000; --accent-wash: color-mix(in srgb, #e5e5e5 18%, #000000);
+  --border: color-mix(in srgb, #e5e5e5 24%, transparent); --danger: #f80363;
+  --shadow: 0 0 0 1px #1f1f1f;
+}
+
+:root[data-theme='nord'] {
+  --bg: #3B4252; --surface: #434C5E; --surface-2: #4C566A; --panel: #0b1021cc; --panel-head: #2E3440;
+  --ink: #D8DEE9; --ink-soft: color-mix(in srgb, #D8DEE9 82%, transparent); --ink-faint: color-mix(in srgb, #D8DEE9 55%, transparent);
+  --accent: #D8DEE9; --accent-ink: #3B4252; --accent-wash: color-mix(in srgb, #D8DEE9 18%, #3B4252);
+  --border: color-mix(in srgb, #D8DEE9 24%, transparent); --danger: #f80363;
+  --shadow: 0 1px 2px rgba(0,0,0,.35);
+  --cat-1: #BF616A;
+  --cat-2: #D08770;
+  --cat-3: #EBCB8B;
+  --cat-4: #A3BE8C;
+}
+
+:root[data-theme='nord-frost'] {
+  --bg: #3B4252; --surface: #434C5E; --surface-2: #4C566A; --panel: #0b1021cc; --panel-head: #2E3440;
+  --ink: #D8DEE9; --ink-soft: color-mix(in srgb, #D8DEE9 82%, transparent); --ink-faint: color-mix(in srgb, #D8DEE9 55%, transparent);
+  --accent: #D8DEE9; --accent-ink: #3B4252; --accent-wash: color-mix(in srgb, #D8DEE9 18%, #3B4252);
+  --border: color-mix(in srgb, #D8DEE9 24%, transparent); --danger: #f80363;
+  --shadow: 0 1px 2px rgba(0,0,0,.35);
+  --cat-1: #8FBCBB;
+  --cat-2: #88C0D0;
+  --cat-3: #81A1C1;
+  --cat-4: #5E81AC;
+}
+
+:root[data-theme='parchment'] {
+  --bg: #f5efdc; --surface: #fafaf5; --surface-2: #f0e9d0; --panel: #ffffff; --panel-head: #e8dfc4;
+  --ink: #2a2420; --ink-soft: color-mix(in srgb, #2a2420 82%, transparent); --ink-faint: color-mix(in srgb, #2a2420 55%, transparent);
+  --accent: #8b2c2c; --accent-ink: #f5efdc; --accent-wash: color-mix(in srgb, #8b2c2c 18%, #f5efdc);
+  --border: color-mix(in srgb, #2a2420 24%, transparent); --danger: #f80363;
+  --shadow: 0 1px 2px #0000001a;
+}
+
+:root[data-theme='raspberry-jam'] {
+  --bg: #0b1021; --surface: #1c2636; --surface-2: #607d8b4d; --panel: #0b1021; --panel-head: #05070e;
+  --ink: #eb2d6c; --ink-soft: color-mix(in srgb, #eb2d6c 82%, transparent); --ink-faint: color-mix(in srgb, #eb2d6c 55%, transparent);
+  --accent: #eb2d6c; --accent-ink: #0b1021; --accent-wash: color-mix(in srgb, #eb2d6c 18%, #0b1021);
+  --border: color-mix(in srgb, #eb2d6c 24%, transparent); --danger: #f80363;
+  --shadow: 0 1px 2px rgba(0,0,0,.35);
+}
+
+:root[data-theme='rose-pine'] {
+  --bg: #191724; --surface: #1f1d2e; --surface-2: #302d44; --panel: #26233a; --panel-head: #1f1d2e;
+  --ink: #e0def4; --ink-soft: color-mix(in srgb, #f6c177 82%, transparent); --ink-faint: color-mix(in srgb, #f6c177 55%, transparent);
+  --accent: #ebbcba; --accent-ink: #191724; --accent-wash: color-mix(in srgb, #ebbcba 18%, #191724);
+  --border: color-mix(in srgb, #e0def4 24%, transparent); --danger: #f80363;
+  --shadow: 0 1px 2px #0000004d;
+}
+
+:root[data-theme='solarized-dark'] {
+  --bg: #002b36; --surface: #003641; --surface-2: #073642; --panel: #073642; --panel-head: #001e25;
+  --ink: #93a1a1; --ink-soft: color-mix(in srgb, #93a1a1 82%, transparent); --ink-faint: color-mix(in srgb, #93a1a1 55%, transparent);
+  --accent: #268bd2; --accent-ink: #002b36; --accent-wash: color-mix(in srgb, #268bd2 18%, #002b36);
+  --border: color-mix(in srgb, #93a1a1 24%, transparent); --danger: #f80363;
+  --shadow: 0 1px 2px #00000066;
+}
+
+:root[data-theme='solarized-light'] {
+  --bg: #fdf6e3; --surface: #ffffff; --surface-2: #eee8d5; --panel: #ffffff; --panel-head: #eee8d5;
+  --ink: #586e75; --ink-soft: color-mix(in srgb, #073642 82%, transparent); --ink-faint: color-mix(in srgb, #073642 55%, transparent);
+  --accent: #268bd2; --accent-ink: #fdf6e3; --accent-wash: color-mix(in srgb, #268bd2 18%, #fdf6e3);
+  --border: color-mix(in srgb, #586e75 24%, transparent); --danger: #f80363;
+  --shadow: 0 1px 2px #93a1a140;
+}
+
+:root[data-theme='thebe'] {
+  --bg: #141b33; --surface: #141b33; --surface-2: #060913; --panel: #0b1021; --panel-head: #060913;
+  --ink: #b187f5; --ink-soft: color-mix(in srgb, #b187f5 82%, transparent); --ink-faint: color-mix(in srgb, #b187f5 55%, transparent);
+  --accent: #b187f5; --accent-ink: #141b33; --accent-wash: color-mix(in srgb, #b187f5 18%, #141b33);
+  --border: color-mix(in srgb, #b187f5 24%, transparent); --danger: #f80363;
+  --shadow: 0 1px 2px rgba(0,0,0,.35);
+}
+
+:root[data-theme='tiger'] {
+  --bg: #0b1021; --surface: #1c2636; --surface-2: #607d8b4d; --panel: #0b1021; --panel-head: #05070e;
+  --ink: #f58233; --ink-soft: color-mix(in srgb, #f58233 82%, transparent); --ink-faint: color-mix(in srgb, #f58233 55%, transparent);
+  --accent: #f58233; --accent-ink: #0b1021; --accent-wash: color-mix(in srgb, #f58233 18%, #0b1021);
+  --border: color-mix(in srgb, #f58233 24%, transparent); --danger: #f80363;
+  --shadow: 0 1px 2px rgba(0,0,0,.35);
+}
+
+:root[data-theme='tokyo-night'] {
+  --bg: #1a1b26; --surface: #1f2335; --surface-2: #292e42; --panel: #24283b; --panel-head: #16161e;
+  --ink: #c0caf5; --ink-soft: color-mix(in srgb, #c0caf5 82%, transparent); --ink-faint: color-mix(in srgb, #c0caf5 55%, transparent);
+  --accent: #7aa2f7; --accent-ink: #1a1b26; --accent-wash: color-mix(in srgb, #7aa2f7 18%, #1a1b26);
+  --border: color-mix(in srgb, #c0caf5 24%, transparent); --danger: #f80363;
+  --shadow: 0 1px 3px #0b0c10cc;
+  --cat-1: #7dcfff;
+  --cat-2: #9ece6a;
+  --cat-3: #ff9e64;
+  --cat-4: #bb9af7;
+  --cat-5: #f7768e;
+}
+
+:root[data-theme='zinc'] {
+  --bg: #09090b; --surface: #18181b; --surface-2: #27272a; --panel: #0f0f12; --panel-head: #050506;
+  --ink: #fafafa; --ink-soft: color-mix(in srgb, #fafafa 82%, transparent); --ink-faint: color-mix(in srgb, #fafafa 55%, transparent);
+  --accent: #8b7cff; --accent-ink: #09090b; --accent-wash: color-mix(in srgb, #8b7cff 18%, #09090b);
+  --border: color-mix(in srgb, #fafafa 24%, transparent); --danger: #f80363;
+  --shadow: 0 0 0 1px #27272a;
+}

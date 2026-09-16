@@ -83,7 +83,6 @@ var (
 	validColumns    = map[string]bool{"auto": true, "2": true, "3": true, "4": true, "5": true, "6": true}
 	validSizes      = map[string]bool{"s": true, "m": true, "l": true}
 	validCardStyles = map[string]bool{"thumbs": true, "compact": true, "tile": true}
-	validThemes     = map[string]bool{"auto": true, "light": true, "dark": true, "dashy": true}
 )
 
 // sanitize ersetzt unbekannte Werte durch die Standardwerte.
@@ -98,7 +97,7 @@ func (s Settings) sanitize() Settings {
 	if !validCardStyles[s.CardStyle] {
 		s.CardStyle = d.CardStyle
 	}
-	if !validThemes[s.Theme] {
+	if !validTheme(s.Theme) {
 		s.Theme = d.Theme
 	}
 	s.UncatSpan = clampSpan(s.UncatSpan)
@@ -127,6 +126,11 @@ func loadSettings(db *sql.DB) Settings {
 		case "card_style":
 			s.CardStyle, hasStyle = v, true
 		case "theme":
+			// "dashy" hieß die erste, handgeschriebene Nord-Palette; sie ist
+			// in der übertragenen Themepalette als nord-frost aufgegangen.
+			if v == "dashy" {
+				v = "nord-frost"
+			}
 			s.Theme = v
 		case "show_thumbs":
 			// Vorgänger von "card_style": nur noch als Wanderung gelesen.

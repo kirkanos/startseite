@@ -26,12 +26,23 @@ keine nativen Kompilier-Abhängigkeiten.
     gleich breit bleiben
   - **Kartenform** — „Mit Vorschau" (Screenshot), „Kompakt" (einzeilig) oder
     „Kachel" (Titel oben, großes Symbol darunter — der Dashy-Look)
-  - **Design** — „Wie das System", „Hell", „Dunkel" oder **„Dashy (Nord)"**:
-    Nord-Palette, Kategorien als gerahmte Panels mit eigener Kopfzeile, der
-    Rahmen in der Farbe der Kategorie. Das Design gilt auch auf der
-    öffentlichen Seite
+  - **Design** — „Wie das System", „Hell", „Dunkel" plus **22 Farbpaletten von
+    Dashy** (Nord, Nord Frost, Dracula, Tokyo Night, Catppuccin, Gruvbox,
+    Rosé Pine, Solarized hell/dunkel, Midnight, Zinc, Parchment, Aurora,
+    Cyberpunk, Matrix, High Contrast, Callisto, Thebe, Crayola, Bee, Tiger,
+    Raspberry Jam, Hacker Girl). Das Design gilt auch auf der öffentlichen
+    Seite. Erzeugt mit `tools/gen-themes.py`, siehe unten
   - Alles liegt **in der Datenbank**, gilt also auf jedem Rechner gleich
-- ✏️ **Links bearbeiten** — URL, Titel, Kategorie; Screenshot optional neu erzeugen
+- 🗂️ **Kategorien als Panel** — jede Kategorie ist ein eigener Kasten mit
+  Kopfzeile und einer Kontur in ihrer Farbe; über den Pfeil links lässt sie sich
+  **einklappen**. Der Zustand liegt in der Datenbank und gilt auf allen Geräten
+- 🎨 **Symbole für Links und Kategorien** — statt des Favicons ein Symbol aus
+  **selfh.st**, **dashboard-icons**, **simple-icons**, **Material Design Icons**,
+  **Font Awesome**, ein **Emoji** oder eine eigene Bild-URL. Auswahl über einen
+  Wähler mit Suche über rund 16.000 Symbole. Gewählte Symbole werden **einmal
+  geholt und lokal abgelegt** (`data/icons/`) — das Dashboard lädt danach nichts
+  mehr von fremden Servern und funktioniert auch ohne Internet
+- ✏️ **Links bearbeiten** — URL, Titel, Kategorie, Symbol; Screenshot optional neu erzeugen
 - 🌐 **Öffentliche Links** — einzeln als „öffentlich" markierbar; ohne Login sichtbar
 - 🔞 **NSFW-Kategorien** — Kategorien lassen sich unter „Kategorien verwalten" als
   NSFW markieren. Sie sind im Dashboard standardmäßig ausgeblendet (Knopf „NSFW
@@ -59,8 +70,44 @@ keine nativen Kompilier-Abhängigkeiten.
 data/
 ├── app.db            # SQLite-Datenbank (Links, Kategorien inkl. Layout & NSFW, Ansicht)
 ├── app.db-wal        # WAL-Journal
-└── thumbnails/       # generierte Screenshot-Vorschauen (*.jpg)
+├── thumbnails/       # generierte Screenshot-Vorschauen (*.jpg)
+└── icons/            # geholte Symbole; index/ enthält die Namenslisten für die Suche
 ```
+
+## Symbole
+
+Die Kennungen folgen denen von Dashy:
+
+| Kennung            | Sammlung                          |
+| ------------------ | --------------------------------- |
+| `sh-jellyfin`      | [selfh.st](https://selfh.st/icons/) |
+| `hl-jellyfin`      | dashboard-icons (Homarr Labs)     |
+| `si-grafana`       | simple-icons (in Markenfarbe)     |
+| `mdi-home`         | Material Design Icons             |
+| `fa-solid-rocket`  | Font Awesome (auch `fas fa-rocket`) |
+| `🚀`               | Emoji                             |
+| `https://…/x.png`  | eigene Bild-URL                   |
+| *(leer)*           | das automatisch geholte Favicon   |
+
+Beim Speichern holt der Server das Symbol einmal und legt es unter
+`data/icons/` ab; ausgeliefert wird danach nur noch lokal. Die Namenslisten für
+die Suche kommen ebenfalls einmalig vom CDN und werden eine Woche lang
+wiederverwendet. Nur der Auswahldialog selbst zeigt seine Vorschaubilder direkt
+von der Quelle — 120 Symbole durch den eigenen Server zu schleusen wäre zu
+langsam. Emoji brauchen gar kein Netz, ihre Liste steckt im Binary.
+
+## Themes nachziehen
+
+`static/themes.css` ist erzeugt. Um die Paletten gegen eine neuere Dashy-Version
+aufzufrischen, dessen `src/styles/` besorgen und:
+
+```
+python3 tools/gen-themes.py <pfad-zu-dashy/src/styles> > static/themes.css
+```
+
+Übertragen werden nur Themes, die reine Farbpaletten sind. Themes mit eigenem
+Struktur-CSS (glass, brutalist, neomorphic, material, minimal, glow) bleiben
+außen vor — das sind eigene Layout-Konzepte, keine Farbsätze.
 
 ## Schnellstart (Docker, hinter Traefik)
 

@@ -28,7 +28,7 @@
   <nav class="cats" aria-label="{{.T "category"}}">
     <button class="cat active" data-cat="all">{{.T "all"}} <span class="n">· {{.Total}}</span></button>
     {{range .Groups}}
-      <button class="cat" data-cat="{{.ID}}"><span class="dot" style="{{.Dot}}"></span>{{.Name}} <span class="n">· {{len .Links}}</span></button>
+      <button class="cat" data-cat="{{.ID}}">{{template "icon" .Icon}}<span class="dot" style="{{.Dot}}"></span>{{.Name}} <span class="n">· {{len .Links}}</span></button>
     {{end}}
   </nav>
   <p class="empty" id="empty-search" hidden>{{.T "no_matches"}}</p>
@@ -36,6 +36,10 @@
   {{range .Groups}}
   <section class="section" data-cat="{{.ID}}" style="{{.Accent}}">
     <div class="section-head">
+      <button class="sec-fold" type="button" title="{{$.T "collapse"}}" aria-expanded="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      {{template "icon" .Icon}}
       <span class="dot" style="{{.Dot}}"></span>
       <h2>{{.Name}}</h2>
       <span class="count">{{len .Links}}</span>
@@ -55,7 +59,7 @@
             {{end}}
           </div>
           <div class="card-body">
-            {{if .Favicon}}<img class="favicon" src="{{.Favicon}}" alt="" loading="lazy" data-ini="{{initials .Title}}">{{else}}<span class="favicon ph">{{initials .Title}}</span>{{end}}
+            {{if not .Icon.Empty}}{{template "icon" .Icon}}{{else if .Favicon}}<img class="favicon" src="{{.Favicon}}" alt="" loading="lazy" data-ini="{{initials .Title}}">{{else}}<span class="favicon ph">{{initials .Title}}</span>{{end}}
             <div class="meta">
               <div class="card-title">{{.Title}}</div>
               <div class="card-url mono">{{host .URL}}</div>
@@ -124,6 +128,15 @@
     });
     search.addEventListener('input', applyFilter);
   }
+
+  // ---------- Kategorien einklappen ----------
+  // Ohne Login nur für diesen Besuch — gespeichert wird nichts.
+  document.querySelectorAll('.sec-fold').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const collapsed = btn.closest('.section').classList.toggle('collapsed');
+      btn.setAttribute('aria-expanded', String(!collapsed));
+    });
+  });
 
   // ---------- Kaputte Favicons durch Initialen ersetzen ----------
   function faviconFallback(img) {

@@ -1,3 +1,12 @@
+{{/* Symbol eines Links oder einer Kategorie. Die Größe kommt aus dem
+     Zusammenhang (.section-head .ic, .card-body > .ic …), nicht von hier. */}}
+{{define "icon"}}
+{{- if eq .Kind "img"}}<img class="ic" src="{{.Src}}" alt="" loading="lazy">
+{{- else if eq .Kind "mask"}}<span class="ic mask" style="{{.MaskStyle}}" aria-hidden="true"></span>
+{{- else if eq .Kind "emoji"}}<span class="ic emoji" aria-hidden="true">{{.Text}}</span>
+{{- end}}
+{{- end}}
+
 {{define "layout"}}<!doctype html>
 <html lang="{{.Lang}}" data-theme="{{.View.ThemeAttr}}">
 <head>
@@ -6,6 +15,7 @@
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ctext y='20' font-size='20'%3E%F0%9F%94%96%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="/static/app.css">
+<link rel="stylesheet" href="/static/themes.css">
 <title>{{.Title}}</title>
 </head>
 <body data-cols="{{.View.Columns}}" data-size="{{.View.CardSize}}" data-cards="{{.View.CardStyle}}" data-nsfw="{{.View.NSFWAttr}}">

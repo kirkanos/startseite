@@ -11,6 +11,12 @@
   --accent-wash: #ecedfb;
   --danger: #d1435b;
   --shadow: 0 1px 2px rgba(20, 24, 45, 0.05), 0 8px 24px -12px rgba(20, 24, 45, 0.18);
+  /* Flächen der Kategorie-Panels */
+  --panel: #ffffff;
+  --panel-head: #f6f7fb;
+  --font-head: inherit;
+  /* Rückfallfarben für Kategorien ohne eigene Farbe (Themes überschreiben sie) */
+  --cat-1: #4f5bd5; --cat-2: #2e9e83; --cat-3: #c9873a; --cat-4: #b4478f; --cat-5: #3d7fc1;
   --radius: 14px;
   --card-min: 232px;
   --grid-gap: 16px;
@@ -25,6 +31,7 @@
     --ink: #e7e9f0; --ink-soft: #a3a9bd; --ink-faint: #727892;
     --accent: #7c86ec; --accent-ink: #0e1017; --accent-wash: #20233a; --danger: #f2748b;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 30px -14px rgba(0, 0, 0, 0.6);
+    --panel: #141823; --panel-head: #1b1f2b;
   }
 }
 :root[data-theme='dark'] {
@@ -32,12 +39,14 @@
   --ink: #e7e9f0; --ink-soft: #a3a9bd; --ink-faint: #727892;
   --accent: #7c86ec; --accent-ink: #0e1017; --accent-wash: #20233a; --danger: #f2748b;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 30px -14px rgba(0, 0, 0, 0.6);
+  --panel: #141823; --panel-head: #1b1f2b;
 }
 :root[data-theme='light'] {
   --bg: #eef0f5; --surface: #ffffff; --surface-2: #f6f7fb; --border: #dfe3ec;
   --ink: #1c2030; --ink-soft: #565d73; --ink-faint: #8b91a6;
   --accent: #4f5bd5; --accent-ink: #ffffff; --accent-wash: #ecedfb; --danger: #d1435b;
   --shadow: 0 1px 2px rgba(20, 24, 45, 0.05), 0 8px 24px -12px rgba(20, 24, 45, 0.18);
+  --panel: #ffffff; --panel-head: #f6f7fb;
 }
 
 * { box-sizing: border-box; }
@@ -349,64 +358,113 @@ body[data-nsfw='on'] #nsfw-toggle .eye-slash { display: none; }
   .section[data-nsfw='1'] .thumb-fallback img { transition: none; }
 }
 
-/* ---------- Theme "dashy": Nord-Palette + Panel-Sektionen ----------
-   Angelehnt an die Dashy-Demo (demo.dashy.to, Theme „Nord Frost"): dunkles
-   Schiefergrau, Sektionen als gerahmte Panels mit eigener Kopfzeile, der
-   Rahmen in der Farbe der Kategorie (--cat kommt per Inline-Style mit). */
-:root[data-theme='dashy'] {
-  --bg: #2e3440; --surface: #434c5e; --surface-2: #3b4252; --border: #4c566a;
-  --ink: #eceff4; --ink-soft: #d8dee9; --ink-faint: #9aa4b8;
-  --accent: #88c0d0; --accent-ink: #2e3440; --accent-wash: #3b4252; --danger: #bf616a;
-  --shadow: 1px 1px 2px rgba(19, 15, 35, 0.55);
-  --radius: 6px;
-  /* Panel-Flächen der Sektionen */
-  --panel: #29303c;
-  --panel-head: #3b4252;
-  --font-head: Georgia, 'Times New Roman', serif;
-}
+/* ---------- Kategorien als Panel ----------
+   Wie bei Dashy: jede Kategorie ist ein eigener Kasten mit Kopfzeile und einer
+   Kontur in ihrer Farbe. --cat kommt per Inline-Style aus Group.Accent(); hat
+   die Kategorie keine eigene Farbe, greift die Themepalette (--cat-1…5). */
+.sections > .section:nth-child(5n + 1) { --cat-fallback: var(--cat-1); }
+.sections > .section:nth-child(5n + 2) { --cat-fallback: var(--cat-2); }
+.sections > .section:nth-child(5n + 3) { --cat-fallback: var(--cat-3); }
+.sections > .section:nth-child(5n + 4) { --cat-fallback: var(--cat-4); }
+.sections > .section:nth-child(5n + 5) { --cat-fallback: var(--cat-5); }
 
-:root[data-theme='dashy'] .brand { font-family: var(--font-head); font-size: 17px; }
-:root[data-theme='dashy'] .btn,
-:root[data-theme='dashy'] .cat,
-:root[data-theme='dashy'] .search,
-:root[data-theme='dashy'] .lang { border-radius: 5px; }
-:root[data-theme='dashy'] .cat.active { border-color: var(--accent); color: var(--accent); }
-
-/* Sektion = Panel */
-:root[data-theme='dashy'] .sections { column-gap: 22px; row-gap: 22px; }
-:root[data-theme='dashy'] .section {
+.section {
   background: var(--panel);
-  border: 2px solid var(--cat, var(--border));
+  border: 2px solid var(--cat, var(--cat-fallback, var(--border)));
   border-radius: var(--radius);
   padding-bottom: 12px;
-  box-shadow: 0 2px 10px -4px rgba(19, 15, 35, 0.7);
+  box-shadow: var(--shadow);
 }
 /* Auf der öffentlichen Seite stehen die Sektionen ohne Raster untereinander. */
-:root[data-theme='dashy'] .wrap > .section { margin-bottom: 22px; }
-:root[data-theme='dashy'] .section-head {
-  margin: 0 0 12px; padding: 8px 14px; gap: 9px;
+.wrap > .section { margin-bottom: 20px; }
+
+.section-head {
+  margin: 0 0 12px; padding: 8px 13px; gap: 9px;
   background: var(--panel-head);
-  border-bottom: 1px solid color-mix(in srgb, var(--cat, var(--border)) 45%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--cat, var(--cat-fallback, var(--border))) 45%, transparent);
+  border-radius: calc(var(--radius) - 3px) calc(var(--radius) - 3px) 0 0;
 }
-:root[data-theme='dashy'] .section-head h2 {
-  font-family: var(--font-head); font-size: 19px; font-weight: 700; letter-spacing: 0;
-  color: var(--ink);
-}
-:root[data-theme='dashy'] .section-head .rule { background: transparent; }
-:root[data-theme='dashy'] .section-head .count { background: var(--bg); }
-:root[data-theme='dashy'] .grid { padding: 0 12px; }
-:root[data-theme='dashy'] .drop-hint { margin: 0; }
+.section-head h2 { font-family: var(--font-head); font-size: 15.5px; }
+.section-head .rule { background: transparent; }
+.section-head .count { background: var(--bg); }
+.section .grid { padding: 0 12px; }
+.section .drop-hint { margin: 0; }
 
-/* Karten wirken im Panel als Kacheln: flacher Rand, Kontur erst beim Hover. */
-:root[data-theme='dashy'] .card {
-  border-color: transparent; box-shadow: var(--shadow);
+/* Einklappen: der Kopf bleibt stehen, der Inhalt verschwindet. */
+.sec-fold {
+  flex: none; width: 24px; height: 24px; margin-left: -3px;
+  display: grid; place-items: center; border: 0; padding: 0;
+  background: none; color: var(--ink-faint); cursor: pointer; border-radius: 7px;
 }
-:root[data-theme='dashy'] .card:hover {
-  border-color: var(--cat, var(--accent)); transform: translateY(-1px);
-}
+.sec-fold svg { width: 15px; height: 15px; display: block; transition: transform 0.15s ease; }
+.sec-fold:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 10%, transparent); }
+.section.collapsed .sec-fold svg { transform: rotate(-90deg); }
+.section.collapsed { padding-bottom: 0; }
+.section.collapsed > .grid { display: none; }
+.section.collapsed .section-head { margin-bottom: 0; border-bottom: 0; border-radius: calc(var(--radius) - 3px); }
 
-/* Der Bearbeiten-Modus zeichnet sonst eine gestrichelte Kontur um ein Panel,
-   das schon einen Rahmen hat — hier reicht ein farbiger Schein. */
-:root[data-theme='dashy'] .edit-mode .sections > .section {
-  outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
+/* ---------- Symbole ----------
+   img  = farbige Grafik, mask = einfarbige Silhouette in der Textfarbe,
+   emoji = das Zeichen selbst. Siehe icons.go. */
+.ic { flex: none; display: block; object-fit: contain; }
+.ic.mask {
+  background-color: currentColor;
+  -webkit-mask: var(--ic) center / contain no-repeat;
+  mask: var(--ic) center / contain no-repeat;
 }
+.ic.emoji { display: grid; place-items: center; line-height: 1; font-size: 1em; }
+
+/* Symbol in der Kategorie-Kopfzeile — ersetzt dort den Farbpunkt. */
+.section-head .ic { width: 18px; height: 18px; }
+.section-head .ic.emoji { font-size: 16px; }
+.cat .ic { width: 14px; height: 14px; }
+.cat .ic.emoji { font-size: 13px; }
+.section-head:has(.ic) > .dot, .cat:has(.ic) > .dot { display: none; }
+
+/* Symbol auf der Karte — an der Stelle des Favicons. */
+.card-body > .ic { width: 22px; height: 22px; border-radius: 6px; }
+.card-body > .ic.emoji { font-size: 18px; }
+body[data-cards='tile'] .card-body > .ic { width: 34px; height: 34px; border-radius: 9px; }
+body[data-cards='tile'] .card-body > .ic.emoji { font-size: 29px; }
+body[data-cards='tile'] .meta { order: -1; }
+
+/* ---------- Symbol-Wähler ---------- */
+.icon-field { display: flex; gap: 8px; align-items: center; }
+/* Im Dialog steht .icon-field in einem .field, dessen Eingaben sonst die volle
+   Breite nehmen — hier teilen sich Vorschau, Feld und Knopf eine Zeile. */
+.icon-field input[name='icon'] {
+  flex: 1; min-width: 0; width: auto;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 9px; padding: 9px 11px; font: inherit; color: var(--ink);
+}
+.icon-field .btn { flex: none; }
+.icon-field .preview {
+  width: 38px; height: 38px; flex: none; border: 1px solid var(--border);
+  border-radius: 9px; background: var(--surface-2); display: grid; place-items: center;
+  color: var(--ink-soft); font-size: 18px; overflow: hidden;
+}
+.icon-field .preview .ic { width: 22px; height: 22px; }
+.icon-field .preview .ic.emoji { font-size: 20px; }
+.icon-dialog { width: min(560px, calc(100vw - 32px)); }
+.icon-sets { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+.icon-sets .cat { font-size: 12px; padding: 5px 10px; }
+.icon-results {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: 7px; max-height: 320px; overflow-y: auto; padding: 2px;
+}
+.icon-hit {
+  border: 1px solid var(--border); background: var(--surface); border-radius: 9px;
+  padding: 9px 5px 7px; cursor: pointer; font: inherit; color: var(--ink-soft);
+  display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0;
+}
+.icon-hit:hover { border-color: var(--accent); color: var(--ink); }
+.icon-hit .ic, .icon-hit img { width: 26px; height: 26px; object-fit: contain; }
+.icon-hit .ic.emoji { font-size: 24px; }
+.icon-hit .name {
+  font-size: 10.5px; line-height: 1.25; max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.icon-status { font-size: 12.5px; color: var(--ink-faint); margin: 10px 0 0; text-align: center; }
+.icon-status[hidden] { display: none; }
+
+@media (prefers-reduced-motion: reduce) { .sec-fold svg { transition: none; } }
