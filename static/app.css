@@ -238,17 +238,41 @@ body:not([data-cols='auto']) .grid { grid-template-columns: repeat(var(--sec-col
 .section.resizing { user-select: none; }
 .section.resizing .sec-width { color: var(--accent); font-weight: 600; }
 
-/* Screenshot-Vorschauen ausgeblendet: kompakte Kartenzeilen. Der Titel darf die
-   volle Breite nutzen — die Aktionen legen sich erst beim Hover darüber. */
-body[data-thumbs='off'] .thumb { display: none; }
-body[data-thumbs='off'] .card-body { padding: 12px 13px; align-items: center; }
-body[data-thumbs='off'] .card-actions {
+/* ---------- Kartenformen (data-cards am <body>) ---------- */
+
+/* "compact": ohne Vorschau, kompakte Kartenzeilen. Der Titel darf die volle
+   Breite nutzen — die Aktionen legen sich erst beim Hover darüber. */
+body[data-cards='compact'] .thumb { display: none; }
+body[data-cards='compact'] .card-body { padding: 12px 13px; align-items: center; }
+body[data-cards='compact'] .card-actions {
   top: 50%; right: 0; transform: translateY(-50%);
   padding: 6px 8px 6px 14px; border-radius: var(--radius);
   background: linear-gradient(90deg, transparent, var(--surface) 14px);
 }
 .pub-badge-inline { display: none; font-size: 11px; margin-right: 5px; }
-body[data-thumbs='off'] .pub-badge-inline { display: inline; }
+body[data-cards='compact'] .pub-badge-inline,
+body[data-cards='tile'] .pub-badge-inline { display: inline; }
+
+/* "tile": Dashy-Kachel — Titel oben, großes Symbol darunter, beides zentriert.
+   Die Reihenfolge dreht sich per order, das HTML bleibt für alle Formen gleich. */
+body[data-cards='tile'] .thumb { display: none; }
+body[data-cards='tile'] .card-body {
+  flex-direction: column; align-items: center; justify-content: center;
+  gap: 9px; padding: 13px 10px 15px; text-align: center; min-height: 86px;
+}
+body[data-cards='tile'] .meta { order: -1; max-width: 100%; }
+body[data-cards='tile'] .card-title { white-space: normal; font-size: 13px; }
+body[data-cards='tile'] .card-url { display: none; }
+body[data-cards='tile'] .favicon {
+  width: 34px; height: 34px; border-radius: 9px; background: none;
+}
+body[data-cards='tile'] .favicon.ph { font-size: 15px; background: var(--surface-2); }
+body[data-cards='tile'] .card-actions { top: 6px; right: 6px; }
+
+/* Kacheln tragen weniger Text, brauchen also weniger Breite. */
+body[data-cards='tile'][data-size='s'] { --card-min: 118px; --grid-gap: 10px; }
+body[data-cards='tile'][data-size='m'] { --card-min: 148px; --grid-gap: 12px; }
+body[data-cards='tile'][data-size='l'] { --card-min: 190px; --grid-gap: 14px; }
 
 /* Ansichts-Panel */
 .view-opts { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-end; }
@@ -323,4 +347,66 @@ body[data-nsfw='on'] #nsfw-toggle .eye-slash { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .section[data-nsfw='1'] .thumb img,
   .section[data-nsfw='1'] .thumb-fallback img { transition: none; }
+}
+
+/* ---------- Theme "dashy": Nord-Palette + Panel-Sektionen ----------
+   Angelehnt an die Dashy-Demo (demo.dashy.to, Theme „Nord Frost"): dunkles
+   Schiefergrau, Sektionen als gerahmte Panels mit eigener Kopfzeile, der
+   Rahmen in der Farbe der Kategorie (--cat kommt per Inline-Style mit). */
+:root[data-theme='dashy'] {
+  --bg: #2e3440; --surface: #434c5e; --surface-2: #3b4252; --border: #4c566a;
+  --ink: #eceff4; --ink-soft: #d8dee9; --ink-faint: #9aa4b8;
+  --accent: #88c0d0; --accent-ink: #2e3440; --accent-wash: #3b4252; --danger: #bf616a;
+  --shadow: 1px 1px 2px rgba(19, 15, 35, 0.55);
+  --radius: 6px;
+  /* Panel-Flächen der Sektionen */
+  --panel: #29303c;
+  --panel-head: #3b4252;
+  --font-head: Georgia, 'Times New Roman', serif;
+}
+
+:root[data-theme='dashy'] .brand { font-family: var(--font-head); font-size: 17px; }
+:root[data-theme='dashy'] .btn,
+:root[data-theme='dashy'] .cat,
+:root[data-theme='dashy'] .search,
+:root[data-theme='dashy'] .lang { border-radius: 5px; }
+:root[data-theme='dashy'] .cat.active { border-color: var(--accent); color: var(--accent); }
+
+/* Sektion = Panel */
+:root[data-theme='dashy'] .sections { column-gap: 22px; row-gap: 22px; }
+:root[data-theme='dashy'] .section {
+  background: var(--panel);
+  border: 2px solid var(--cat, var(--border));
+  border-radius: var(--radius);
+  padding-bottom: 12px;
+  box-shadow: 0 2px 10px -4px rgba(19, 15, 35, 0.7);
+}
+/* Auf der öffentlichen Seite stehen die Sektionen ohne Raster untereinander. */
+:root[data-theme='dashy'] .wrap > .section { margin-bottom: 22px; }
+:root[data-theme='dashy'] .section-head {
+  margin: 0 0 12px; padding: 8px 14px; gap: 9px;
+  background: var(--panel-head);
+  border-bottom: 1px solid color-mix(in srgb, var(--cat, var(--border)) 45%, transparent);
+}
+:root[data-theme='dashy'] .section-head h2 {
+  font-family: var(--font-head); font-size: 19px; font-weight: 700; letter-spacing: 0;
+  color: var(--ink);
+}
+:root[data-theme='dashy'] .section-head .rule { background: transparent; }
+:root[data-theme='dashy'] .section-head .count { background: var(--bg); }
+:root[data-theme='dashy'] .grid { padding: 0 12px; }
+:root[data-theme='dashy'] .drop-hint { margin: 0; }
+
+/* Karten wirken im Panel als Kacheln: flacher Rand, Kontur erst beim Hover. */
+:root[data-theme='dashy'] .card {
+  border-color: transparent; box-shadow: var(--shadow);
+}
+:root[data-theme='dashy'] .card:hover {
+  border-color: var(--cat, var(--accent)); transform: translateY(-1px);
+}
+
+/* Der Bearbeiten-Modus zeichnet sonst eine gestrichelte Kontur um ein Panel,
+   das schon einen Rahmen hat — hier reicht ein farbiger Schein. */
+:root[data-theme='dashy'] .edit-mode .sections > .section {
+  outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
 }

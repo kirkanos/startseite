@@ -61,7 +61,21 @@
           <option value="l" {{if eq .View.CardSize "l"}}selected{{end}}>{{.T "size_l"}}</option>
         </select>
       </label>
-      <label class="opt check"><input type="checkbox" id="opt-thumbs" {{if .View.ShowThumbs}}checked{{end}}><span>{{.T "show_thumbs"}}</span></label>
+      <label class="opt"><span>{{.T "card_style"}}</span>
+        <select id="opt-cards">
+          <option value="thumbs" {{if eq .View.CardStyle "thumbs"}}selected{{end}}>{{.T "cards_thumbs"}}</option>
+          <option value="compact" {{if eq .View.CardStyle "compact"}}selected{{end}}>{{.T "cards_compact"}}</option>
+          <option value="tile" {{if eq .View.CardStyle "tile"}}selected{{end}}>{{.T "cards_tile"}}</option>
+        </select>
+      </label>
+      <label class="opt"><span>{{.T "theme"}}</span>
+        <select id="opt-theme">
+          <option value="auto" {{if eq .View.Theme "auto"}}selected{{end}}>{{.T "theme_auto"}}</option>
+          <option value="light" {{if eq .View.Theme "light"}}selected{{end}}>{{.T "theme_light"}}</option>
+          <option value="dark" {{if eq .View.Theme "dark"}}selected{{end}}>{{.T "theme_dark"}}</option>
+          <option value="dashy" {{if eq .View.Theme "dashy"}}selected{{end}}>{{.T "theme_dashy"}}</option>
+        </select>
+      </label>
     </div>
     <p class="hint">{{.T "edit_view_hint"}}</p>
     <p class="hint">{{.T "view_saved_hint"}}</p>
@@ -267,12 +281,16 @@
 
   const optCols = document.getElementById('opt-cols');
   const optSize = document.getElementById('opt-size');
-  const optThumbs = document.getElementById('opt-thumbs');
+  const optCards = document.getElementById('opt-cards');
+  const optTheme = document.getElementById('opt-theme');
 
   function applyView() {
     document.body.dataset.cols = optCols.value;
     document.body.dataset.size = optSize.value;
-    document.body.dataset.thumbs = optThumbs.checked ? 'on' : 'off';
+    document.body.dataset.cards = optCards.value;
+    // "auto" heißt: kein Attribut — dann entscheidet prefers-color-scheme.
+    if (optTheme.value === 'auto') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.dataset.theme = optTheme.value;
     // Die Kartenbreite greift nur, wenn die Spalten automatisch verteilt werden.
     optSize.disabled = optCols.value !== 'auto';
     document.querySelectorAll('.section').forEach(applySectionCols);
@@ -295,12 +313,13 @@
       body: JSON.stringify({
         columns: optCols.value,
         card_size: optSize.value,
-        show_thumbs: optThumbs.checked,
+        card_style: optCards.value,
+        theme: optTheme.value,
         show_nsfw: document.body.dataset.nsfw === 'on'
       })
     }).catch(() => {});
   }
-  [optCols, optSize, optThumbs].forEach((el) => el.addEventListener('change', saveView));
+  [optCols, optSize, optCards, optTheme].forEach((el) => el.addEventListener('change', saveView));
   applyView();
 
   // ---------- NSFW ein-/ausblenden ----------

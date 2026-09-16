@@ -21,9 +21,15 @@ keine nativen Kompilier-Abhängigkeiten.
   - **Mehrere Kategorien pro Zeile** — die Breite jeder Sektion an ihrer rechten
     Kante ziehen; sie rastet in ein **12-Spalten-Raster** (3/12 bis 12/12).
     Was zusammen in 12 Spalten passt, steht nebeneinander
-  - **Karten** — Spaltenzahl (automatisch oder 2–6), Kartenbreite und
-    Screenshot-Vorschauen ein/aus. Bei fester Spaltenzahl bekommt jede Sektion
-    ihren Anteil, damit die Karten überall gleich breit bleiben
+  - **Karten** — Spaltenzahl (automatisch oder 2–6) und Kartenbreite. Bei fester
+    Spaltenzahl bekommt jede Sektion ihren Anteil, damit die Karten überall
+    gleich breit bleiben
+  - **Kartenform** — „Mit Vorschau" (Screenshot), „Kompakt" (einzeilig) oder
+    „Kachel" (Titel oben, großes Symbol darunter — der Dashy-Look)
+  - **Design** — „Wie das System", „Hell", „Dunkel" oder **„Dashy (Nord)"**:
+    Nord-Palette, Kategorien als gerahmte Panels mit eigener Kopfzeile, der
+    Rahmen in der Farbe der Kategorie. Das Design gilt auch auf der
+    öffentlichen Seite
   - Alles liegt **in der Datenbank**, gilt also auf jedem Rechner gleich
 - ✏️ **Links bearbeiten** — URL, Titel, Kategorie; Screenshot optional neu erzeugen
 - 🌐 **Öffentliche Links** — einzeln als „öffentlich" markierbar; ohne Login sichtbar

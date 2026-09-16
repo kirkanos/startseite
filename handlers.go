@@ -26,9 +26,20 @@ type Group struct {
 }
 
 // Style liefert die Rasterwerte als Inline-Style. Beide Werte sind Zahlen aus
-// der eigenen Datenbank, daher unbedenklich als template.CSS.
+// der eigenen Datenbank, daher unbedenklich als template.CSS. Die Kategoriefarbe
+// kommt als --cat mit: das Dashy-Theme rahmt die Sektion damit ein.
 func (g Group) Style() template.CSS {
-	return template.CSS(fmt.Sprintf("--span:%d;--sec-cols:%d", g.Span, g.Cols))
+	return template.CSS(fmt.Sprintf("--span:%d;--sec-cols:%d;", g.Span, g.Cols)) + g.Accent()
+}
+
+// Accent stellt die Kategoriefarbe als --cat bereit. Nur geprüfte Hex-Farben
+// werden durchgereicht; alles andere (z. B. "Ohne Kategorie") bleibt beim
+// Standardwert aus dem Stylesheet.
+func (g Group) Accent() template.CSS {
+	if isHexColor(g.Color) {
+		return template.CSS("--cat:" + g.Color)
+	}
+	return ""
 }
 
 // Dot liefert die Farbe des Kategoriepunkts. Nur geprüfte Hex-Farben werden
@@ -155,7 +166,7 @@ func (a *App) handleIndex(w http.ResponseWriter, r *http.Request) {
 type publicData struct {
 	i18n
 	Title      string
-	View       Settings // die öffentliche Seite bleibt immer auf der Standardansicht
+	View       Settings // öffentlich gilt die Standardansicht, nur das Design wird übernommen
 	Groups     []Group
 	Total      int
 	LoginError string // gesetzt, wenn ein Login-Versuch fehlschlug (öffnet das Modal)
@@ -191,10 +202,15 @@ func (a *App) renderPublic(w http.ResponseWriter, r *http.Request, status int, l
 		groups = append(groups, Group{ID: 0, Name: tr(lang, "uncategorized"), Color: "var(--ink-faint)", Links: ls})
 	}
 
+	// Layout und Kartenform bleiben öffentlich auf dem Standard — nur das
+	// Design wird übernommen, damit beide Seiten gleich aussehen.
+	view := defaultSettings()
+	view.Theme = loadSettings(a.db).Theme
+
 	render(w, publicTmpl, status, publicData{
 		i18n:       i18n{Lang: lang},
 		Title:      "Startseite",
-		View:       defaultSettings(),
+		View:       view,
 		Groups:     groups,
 		Total:      len(links),
 		LoginError: loginError,
