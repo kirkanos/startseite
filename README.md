@@ -94,7 +94,12 @@ Beim Speichern holt der Server das Symbol einmal und legt es unter
 die Suche kommen ebenfalls einmalig vom CDN und werden eine Woche lang
 wiederverwendet. Nur der Auswahldialog selbst zeigt seine Vorschaubilder direkt
 von der Quelle — 120 Symbole durch den eigenen Server zu schleusen wäre zu
-langsam. Emoji brauchen gar kein Netz, ihre Liste steckt im Binary.
+langsam. Emoji brauchen gar kein Netz, ihre Liste (`static/emoji.json`) steckt im Binary.
+
+Alles, was ins Binary eingebettet wird, liegt in `static/` oder `templates/` —
+die Auslieferung auf den Zielhost (`.woodpecker/pipeline.yaml`) kopiert genau
+diese beiden Verzeichnisse plus die Go-Quellen. Ein weiteres Asset-Verzeichnis
+würde dort fehlen und den Build brechen.
 
 ## Themes nachziehen
 

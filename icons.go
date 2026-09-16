@@ -6,7 +6,6 @@ package main
 import (
 	"crypto/sha1"
 	"database/sql"
-	_ "embed" // für //go:embed der Emoji-Liste
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -355,9 +354,6 @@ type iconSet struct {
 	parse func([]byte) ([]iconHit, error)
 }
 
-//go:embed assets/emoji.json
-var emojiJSON []byte
-
 var iconSets = []iconSet{
 	{"si", "https://cdn.jsdelivr.net/npm/simple-icons@latest/data/simple-icons.json", parseSimpleIcons},
 	{"mdi", "https://cdn.jsdelivr.net/npm/@mdi/svg@latest/meta.json", parseMDI},
@@ -493,9 +489,13 @@ func (a *App) entriesFor(set string) []iconHit {
 		return e
 	}
 	if set == "emoji" {
-		e, err := parseEmoji(emojiJSON)
-		if err != nil {
-			e = nil
+		// Die Emoji-Liste liegt im Binary (static/ wird von templates.go
+		// eingebettet) — Emoji-Suche braucht also nie ein Netz.
+		var e []iconHit
+		if raw, err := staticFS.ReadFile("static/emoji.json"); err == nil {
+			if parsed, err := parseEmoji(raw); err == nil {
+				e = parsed
+			}
 		}
 		a.icons.entries[set] = e
 		return e
