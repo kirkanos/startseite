@@ -263,25 +263,51 @@ body[data-cards='compact'] .pub-badge-inline,
 body[data-cards='tile'] .pub-badge-inline { display: inline; }
 
 /* "tile": Dashy-Kachel — Titel oben, großes Symbol darunter, beides zentriert.
-   Die Reihenfolge dreht sich per order, das HTML bleibt für alle Formen gleich. */
+   Die Reihenfolge dreht sich per order, das HTML bleibt für alle Formen gleich.
+
+   Alle Maße sind fest: der Titelblock ist immer zwei Zeilen hoch, auch wenn der
+   Titel nur eine braucht, und das Symbolfeld hat unabhängig vom Symbol dieselbe
+   Größe. Dadurch sind alle Kacheln gleich hoch und die Symbole stehen überall
+   auf derselben Linie — sonst rutschte die Reihe bei einem langen Titel. */
+body[data-cards='tile'] {
+  --tile-font: 13px;
+  --tile-icon: 34px;
+  --tile-line-h: 1.3;
+  --tile-lines: 2;
+  --tile-title-h: calc(var(--tile-font) * var(--tile-line-h) * var(--tile-lines));
+}
 body[data-cards='tile'] .thumb { display: none; }
 body[data-cards='tile'] .card-body {
-  flex-direction: column; align-items: center; justify-content: center;
-  gap: 9px; padding: 13px 10px 15px; text-align: center; min-height: 86px;
+  flex-direction: column; align-items: center; justify-content: flex-start;
+  gap: 9px; padding: 12px 10px 14px; text-align: center;
 }
-body[data-cards='tile'] .meta { order: -1; max-width: 100%; }
-body[data-cards='tile'] .card-title { white-space: normal; font-size: 13px; }
+body[data-cards='tile'] .meta {
+  order: -1; width: 100%; height: var(--tile-title-h);
+  display: flex; align-items: center; justify-content: center;
+}
+/* Längere Titel werden nach zwei Zeilen abgeschnitten, statt die Kachel zu
+   strecken; der volle Titel steht im title-Attribut der Karte. */
+body[data-cards='tile'] .card-title {
+  white-space: normal; font-size: var(--tile-font); line-height: var(--tile-line-h);
+  display: -webkit-box; -webkit-line-clamp: var(--tile-lines); -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 body[data-cards='tile'] .card-url { display: none; }
-body[data-cards='tile'] .favicon {
-  width: 34px; height: 34px; border-radius: 9px; background: none;
+body[data-cards='tile'] .favicon,
+body[data-cards='tile'] .card-body > .ic {
+  width: var(--tile-icon); height: var(--tile-icon);
+  flex: none; border-radius: 9px; background: none;
 }
-body[data-cards='tile'] .favicon.ph { font-size: 15px; background: var(--surface-2); }
+body[data-cards='tile'] .favicon.ph {
+  font-size: calc(var(--tile-icon) * 0.42); background: var(--surface-2);
+}
+body[data-cards='tile'] .card-body > .ic.emoji { font-size: calc(var(--tile-icon) * 0.85); }
 body[data-cards='tile'] .card-actions { top: 6px; right: 6px; }
 
 /* Kacheln tragen weniger Text, brauchen also weniger Breite. */
-body[data-cards='tile'][data-size='s'] { --card-min: 118px; --grid-gap: 10px; }
-body[data-cards='tile'][data-size='m'] { --card-min: 148px; --grid-gap: 12px; }
-body[data-cards='tile'][data-size='l'] { --card-min: 190px; --grid-gap: 14px; }
+body[data-cards='tile'][data-size='s'] { --card-min: 118px; --grid-gap: 10px; --tile-font: 12px; --tile-icon: 28px; }
+body[data-cards='tile'][data-size='m'] { --card-min: 148px; --grid-gap: 12px; --tile-font: 13px; --tile-icon: 34px; }
+body[data-cards='tile'][data-size='l'] { --card-min: 190px; --grid-gap: 14px; --tile-font: 14px; --tile-icon: 42px; }
 
 /* Ansichts-Panel */
 .view-opts { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-end; }
@@ -424,9 +450,6 @@ body[data-nsfw='on'] #nsfw-toggle .eye-slash { display: none; }
 /* Symbol auf der Karte — an der Stelle des Favicons. */
 .card-body > .ic { width: 22px; height: 22px; border-radius: 6px; }
 .card-body > .ic.emoji { font-size: 18px; }
-body[data-cards='tile'] .card-body > .ic { width: 34px; height: 34px; border-radius: 9px; }
-body[data-cards='tile'] .card-body > .ic.emoji { font-size: 29px; }
-body[data-cards='tile'] .meta { order: -1; }
 
 /* ---------- Symbol-Wähler ---------- */
 .icon-field { display: flex; gap: 8px; align-items: center; }

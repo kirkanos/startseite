@@ -149,7 +149,7 @@
     <div class="grid">
       {{range .Links}}
       <div class="card" draggable="true" data-id="{{.ID}}" data-cat="{{.CategoryID}}" data-url="{{.URL}}" data-title="{{.Title}}" data-public="{{.Public}}" data-icon="{{.Link.Icon}}" data-search="{{lower .Title}} {{lower (host .URL)}}">
-        <a class="card-link" href="{{.URL}}" target="_blank" rel="noopener noreferrer" draggable="false">
+        <a class="card-link" title="{{.Title}}" href="{{.URL}}" target="_blank" rel="noopener noreferrer" draggable="false">
           <div class="thumb">
             {{if .Public}}<span class="pub-badge" title="{{$.T "public_badge"}}">🌐</span>{{end}}
             {{if .Thumbnail}}

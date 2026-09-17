@@ -48,7 +48,7 @@
     <div class="grid">
       {{range .Links}}
       <div class="card" data-cat="{{.CategoryID}}" data-search="{{lower .Title}} {{lower (host .URL)}}">
-        <a class="card-link" href="{{.URL}}" target="_blank" rel="noopener noreferrer">
+        <a class="card-link" title="{{.Title}}" href="{{.URL}}" target="_blank" rel="noopener noreferrer">
           <div class="thumb">
             {{if .Thumbnail}}
               <img src="/thumbnails/{{.Thumbnail}}" alt="{{.Title}}" loading="lazy">
