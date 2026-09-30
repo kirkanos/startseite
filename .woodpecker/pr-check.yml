@@ -37,6 +37,9 @@ steps:
       - jq -r '.services[] | select(.build == null) | .image' .compose.json > .images.txt
       # Basis-Images aus dem Dockerfile, ohne Stage-Namen (kein ":" oder "/") und ohne Variablen.
       - if [ -f Dockerfile ]; then sed -nE 's/^FROM +(--[^ ]+ +)?([^ ]+).*/\2/Ip' Dockerfile | grep -E '[:/]' | grep -v '\$' >> .images.txt; fi
+      # Renovate pinnt manche Images als tag@sha256:...; skopeo nimmt nicht beides,
+      # geprueft wird dann der Digest - der ist es auch, den der Deploy zieht.
+      - sed -i -E 's/:[^@/]+@sha256:/@sha256:/' .images.txt
       - sort -u .images.txt -o .images.txt
       - cat .images.txt
 
