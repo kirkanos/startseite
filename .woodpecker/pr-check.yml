@@ -1,0 +1,47 @@
+# PR-Check: prueft Pull Requests (vor allem die von Renovate), ohne etwas zu
+# deployen. Der Deploy in woodpecker.yml laeuft weiterhin nur bei push auf main.
+#
+#   1. .env aus .env.enc entschluesseln, damit compose alle Variablen kennt
+#   2. docker compose config: Syntax, Variablen, eingebundene Dateien
+#   3. jeder Image-Tag aus der compose-Datei und dem Dockerfile muss in seiner
+#      Registry existieren - ein Renovate-PR mit falschem Tag faellt hier durch,
+#      nicht erst beim Deploy
+labels:
+  backend: docker
+
+when:
+  - event: pull_request
+
+steps:
+  - name: env
+    image: registry.kirkanos.net/images/ci-build:alpine
+    pull: true
+    environment:
+      SOPS_AGE_KEY:
+        from_secret: sops_age_key
+    commands:
+      - for f in .env.enc docker-compose.env.enc; do if [ -f "$f" ]; then sops --decrypt --input-type dotenv --output-type dotenv --output "$(echo $f | sed 's/\.enc$//')" "$f"; fi; done
+      - ls -la .env* 2>/dev/null || true
+
+  - name: compose config
+    image: docker:cli
+    commands:
+      - docker compose config --quiet
+      - docker compose config --format json > .compose.json
+      - echo "compose config ok"
+
+  - name: collect images
+    image: registry.kirkanos.net/images/ci-build:alpine
+    commands:
+      # Nur Services mit fertigem Image; gebaute Images gibt es in keiner Registry.
+      - jq -r '.services[] | select(.build == null) | .image' .compose.json > .images.txt
+      # Basis-Images aus dem Dockerfile, ohne Stage-Namen (kein ":" oder "/") und ohne Variablen.
+      - if [ -f Dockerfile ]; then sed -nE 's/^FROM +(--[^ ]+ +)?([^ ]+).*/\2/Ip' Dockerfile | grep -E '[:/]' | grep -v '\$' >> .images.txt; fi
+      - sort -u .images.txt -o .images.txt
+      - cat .images.txt
+
+  - name: image tags
+    image: quay.io/skopeo/stable:latest
+    commands:
+      - for img in $(cat .images.txt); do case "$img" in registry.kirkanos.net/*) echo "skip (private) $img";; *) echo "check $img"; skopeo inspect --raw "docker://$img" > /dev/null || exit 1;; esac; done
+      - echo "alle Image-Tags vorhanden"
