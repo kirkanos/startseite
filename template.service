@@ -2,9 +2,14 @@
 Description=%SERVICE%
 After=docker.service
 BindsTo=docker.service
+StartLimitIntervalSec=0
 
 [Service]
 Restart=always
+# Nicht im Sekundentakt neu starten: ohne Pause gibt systemd nach 5 Versuchen in
+# wenigen Sekunden auf (start-limit), schon ein kurzer Registry-Aussetzer legt
+# den Dienst dann dauerhaft lahm.
+RestartSec=15
 WorkingDirectory=/services/%SERVICE%/
 ExecStart=/usr/bin/docker compose up --build --force-recreate --pull always
 ExecStop=/usr/bin/docker compose down

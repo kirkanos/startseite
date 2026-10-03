@@ -65,3 +65,19 @@ steps:
       - echo "Service restart done (Build laeuft im Hintergrund via systemd)"
     when:
       - event: push
+
+  # systemctl start kehrt zurueck, sobald der Startbefehl abgesetzt ist - nicht,
+  # wenn die Container laufen. Ohne diesen Schritt meldet die Pipeline auch dann
+  # Erfolg, wenn ein Image fehlt oder ein Container gleich wieder abstuerzt.
+  - name: verify deploy
+    image: registry.kirkanos.net/images/ci-build:alpine
+    volumes: [ "/services/common/.ssh:/root/.ssh" ]
+    environment:
+      SSH_HOST_PRIMUS:
+        from_secret: ssh_host_primus
+    commands:
+      - . ./.env
+      - test -n "$SERVICE" || (echo "SERVICE ist leer" && exit 1)
+      - timeout 660 sh -c "ssh -T -o BatchMode=yes -o ConnectTimeout=30 -p22 \"$SSH_HOST_PRIMUS\" 'bash -s -- $SERVICE 600' < scripts/verify-deploy.sh"
+    when:
+      - event: push
