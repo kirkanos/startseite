@@ -1,0 +1,43 @@
+# Prüft jeden Pull Request, bevor er auf main landet.
+#
+# Das ist hier nicht nur Kosmetik: Woodpecker läuft erst nach dem Merge auf
+# main — und deployt dabei direkt. Ein Pull Request, der nicht baut, würde den
+# Dienst anhalten, ohne dass er wieder hochkommt. Dieser Workflow fängt das ab.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build, vet, gofmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: go build
+        run: go build ./...
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: gofmt
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "Nicht formatiert:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: go test
+        run: go test ./...
