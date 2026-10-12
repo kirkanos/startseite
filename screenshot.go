@@ -42,13 +42,16 @@ func (a *App) captureThumbnail(pageURL string) string {
 	ctx, cancelTimeout := context.WithTimeout(ctx, 30*time.Second)
 	defer cancelTimeout()
 
-	var pngBuf []byte
-	err := chromedp.Run(ctx,
+	// Seit chromedp 0.19 sind die Aktionen generisch: Run nimmt genau eine
+	// Aktion und liefert deren Wert, Do verkettet die wertlosen.
+	if err := chromedp.Do(ctx,
 		chromedp.EmulateViewport(1280, 800),
 		chromedp.Navigate(pageURL),
 		chromedp.Sleep(1500*time.Millisecond),
-		chromedp.CaptureScreenshot(&pngBuf),
-	)
+	); err != nil {
+		return ""
+	}
+	pngBuf, err := chromedp.Run(ctx, chromedp.CaptureScreenshot())
 	if err != nil || len(pngBuf) == 0 {
 		return ""
 	}
