@@ -3,7 +3,7 @@ module startseite
 go 1.26.0
 
 require (
-	github.com/chromedp/chromedp v0.21.1
+	github.com/chromedp/chromedp v0.23.0
 	golang.org/x/crypto v0.58.0
 	modernc.org/sqlite v1.61.1
 )
