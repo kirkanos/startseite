@@ -3,13 +3,13 @@ module startseite
 go 1.26.0
 
 require (
-	github.com/chromedp/chromedp v0.21.1
+	github.com/chromedp/chromedp v0.23.1
 	golang.org/x/crypto v0.58.0
 	modernc.org/sqlite v1.62.0
 )
 
 require (
-	github.com/chromedp/cdproto v0.159.0 // indirect
+	github.com/chromedp/cdproto v0.160.1 // indirect
 	github.com/dustin/go-humanize v1.1.0 // indirect
 	github.com/go-json-experiment/json v0.0.0-20260623181947-01eb4420fa68 // indirect
 	github.com/google/uuid v1.6.0 // indirect
